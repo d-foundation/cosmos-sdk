@@ -74,6 +74,25 @@ func NewFactoryCLI(clientCtx client.Context, flagSet *pflag.FlagSet) (Factory, e
 		}
 	}
 
+	// Check there is verifiable presentation
+	// These are Base64 encoded bytes
+	vp, _ := flagSet.GetBytesBase64(flags.FlagVerfiablePresentation)
+	if len(vp) == 0 {
+		return Factory{}, errors.New("Verifiable Presentation cannot be empty")
+	}
+	// Set the verifiable presentation as extention option
+	value := VerifiablePresentation{
+		Presentation: vp,
+	}
+	valueBytes, _ := value.Marshal()
+
+	extOpts := []*codectypes.Any{
+		{
+			TypeUrl: "/protocol.chain.sdjwt.v0.VerifiablePresentation",
+			Value:   valueBytes,
+		},
+	}
+
 	gasAdj, _ := flagSet.GetFloat64(flags.FlagGasAdjustment)
 	memo, _ := flagSet.GetString(flags.FlagNote)
 	timeoutHeight, _ := flagSet.GetUint64(flags.FlagTimeoutHeight)
@@ -99,7 +118,7 @@ func NewFactoryCLI(clientCtx client.Context, flagSet *pflag.FlagSet) (Factory, e
 		signMode:           signMode,
 		feeGranter:         clientCtx.FeeGranter,
 		feePayer:           clientCtx.FeePayer,
-	}
+		extOptions:         extOpts}
 
 	feesStr, _ := flagSet.GetString(flags.FlagFees)
 	f = f.WithFees(feesStr)
@@ -289,6 +308,7 @@ func (f Factory) PreprocessTx(keyname string, builder client.TxBuilder) error {
 //
 // txf.WithExtensionOptions(extOpts...)
 func (f Factory) WithExtensionOptions(extOpts ...*codectypes.Any) Factory {
+	fmt.Printf("\n SETTING EXTENTIONOPTIONS -  %s", extOpts)
 	f.extOptions = extOpts
 	return f
 }
@@ -296,9 +316,12 @@ func (f Factory) WithExtensionOptions(extOpts ...*codectypes.Any) Factory {
 // BuildUnsignedTx builds a transaction to be signed given a set of messages.
 // Once created, the fee, memo, and messages are set.
 func (f Factory) BuildUnsignedTx(msgs ...sdk.Msg) (client.TxBuilder, error) {
+	fmt.Println("Building Unsigned Tx")
 	if f.offline && f.generateOnly {
 		if f.chainID != "" {
-			return nil, errors.New("chain ID cannot be used when offline and generate-only flags are set")
+			return nil, errors.New(
+				"chain ID cannot be used when offline and generate-only flags are set",
+			)
 		}
 	} else if f.chainID == "" {
 		return nil, errors.New("chain ID required but not specified")
@@ -343,6 +366,8 @@ func (f Factory) BuildUnsignedTx(msgs ...sdk.Msg) (client.TxBuilder, error) {
 
 	if etx, ok := tx.(client.ExtendedTxBuilder); ok {
 		etx.SetExtensionOptions(f.extOptions...)
+		tx = etx.(client.TxBuilder)
+		return tx, nil
 	}
 
 	return tx, nil
@@ -376,6 +401,7 @@ func (f Factory) PrintUnsignedTx(clientCtx client.Context, msgs ...sdk.Msg) erro
 
 	unsignedTx, err := f.BuildUnsignedTx(msgs...)
 	if err != nil {
+		fmt.Println("UnsignTX")
 		return err
 	}
 
@@ -386,6 +412,7 @@ func (f Factory) PrintUnsignedTx(clientCtx client.Context, msgs ...sdk.Msg) erro
 
 	json, err := encoder(unsignedTx.GetTx())
 	if err != nil {
+		fmt.Println("encode")
 		return err
 	}
 
@@ -444,7 +471,9 @@ func (f Factory) getSimPK() (cryptotypes.PubKey, error) {
 
 		pk, ok = record.PubKey.GetCachedValue().(cryptotypes.PubKey)
 		if !ok {
-			return nil, errors.New("cannot build signature for simulation, failed to convert proto Any to public key")
+			return nil, errors.New(
+				"cannot build signature for simulation, failed to convert proto Any to public key",
+			)
 		}
 	}
 
