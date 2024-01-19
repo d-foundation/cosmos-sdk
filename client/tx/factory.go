@@ -20,6 +20,8 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+	sdjwt "github.com/nymlab/protocol/x/sdjwt"
+	sdjwttypes "github.com/nymlab/protocol/x/sdjwt/types"
 )
 
 // Factory defines a client transaction factory that facilitates generating and
@@ -81,14 +83,14 @@ func NewFactoryCLI(clientCtx client.Context, flagSet *pflag.FlagSet) (Factory, e
 		return Factory{}, errors.New("Verifiable Presentation cannot be empty")
 	}
 	// Set the verifiable presentation as extention option
-	value := VerifiablePresentation{
+	value := sdjwttypes.VerifiablePresentation{
 		Presentation: vp,
 	}
 	valueBytes, _ := value.Marshal()
 
 	extOpts := []*codectypes.Any{
 		{
-			TypeUrl: "/protocol.chain.sdjwt.v0.VerifiablePresentation",
+			TypeUrl: sdjwt.ExtensionOptionTypeUrl,
 			Value:   valueBytes,
 		},
 	}
