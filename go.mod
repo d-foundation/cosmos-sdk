@@ -22,6 +22,7 @@ require (
 	github.com/cosmos/btcutil v1.0.5
 	github.com/cosmos/cosmos-db v1.0.2
 	github.com/cosmos/cosmos-proto v1.0.0-beta.4
+	github.com/cosmos/cosmos-sdk v0.50.3
 	github.com/cosmos/go-bip39 v1.0.0
 	github.com/cosmos/gogogateway v1.2.0
 	github.com/cosmos/gogoproto v1.4.11
@@ -44,6 +45,7 @@ require (
 	github.com/magiconair/properties v1.8.7
 	github.com/manifoldco/promptui v0.9.0
 	github.com/mattn/go-isatty v0.0.20
+	github.com/nymlab/protocol v0.0.0-20240222193452-94d9e205d4e8
 	github.com/prometheus/client_golang v1.18.0
 	github.com/prometheus/common v0.47.0
 	github.com/rs/zerolog v1.32.0
@@ -59,7 +61,6 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20240205150955-31a09d347014
 	google.golang.org/grpc v1.62.0
 	google.golang.org/protobuf v1.33.0
-	github.com/nymlab/protocol v0.0.0-20240119065029-790b78b467db
 	gotest.tools/v3 v3.5.1
 	pgregory.net/rapid v1.1.0
 	sigs.k8s.io/yaml v1.4.0
@@ -93,7 +94,7 @@ require (
 	github.com/dvsekhvalnov/jose2go v1.6.0 // indirect
 	github.com/emicklei/dot v1.6.1 // indirect
 	github.com/fatih/color v1.15.0 // indirect
-	github.com/felixge/httpsnoop v1.0.2 // indirect
+	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/getsentry/sentry-go v0.27.0 // indirect
 	github.com/go-kit/kit v0.12.0 // indirect
@@ -119,7 +120,7 @@ require (
 	github.com/klauspost/compress v1.17.7 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/lib/pq v1.10.7 // indirect
+	github.com/lib/pq v1.10.9 // indirect
 	github.com/libp2p/go-buffer-pool v0.1.0 // indirect
 	github.com/linxGnu/grocksdb v1.8.12 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -127,7 +128,6 @@ require (
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mtibben/percent v0.2.1 // indirect
-	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/oasisprotocol/curve25519-voi v0.0.0-20230904125328-1f23a7beb09a // indirect
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
@@ -150,7 +150,7 @@ require (
 	github.com/zondax/hid v0.9.2 // indirect
 	github.com/zondax/ledger-go v0.14.3 // indirect
 	go.etcd.io/bbolt v1.3.8 // indirect
-	go.uber.org/multierr v1.10.0 // indirect
+	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/net v0.21.0 // indirect
 	golang.org/x/sys v0.17.0 // indirect
 	golang.org/x/term v0.17.0 // indirect

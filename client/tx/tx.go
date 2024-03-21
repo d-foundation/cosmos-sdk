@@ -23,11 +23,7 @@ import (
 
 // GenerateOrBroadcastTxCLI will either generate and print an unsigned transaction
 // or sign it and broadcast it returning an error upon failure.
-func GenerateOrBroadcastTxCLI(
-	clientCtx client.Context,
-	flagSet *pflag.FlagSet,
-	msgs ...sdk.Msg,
-) error {
+func GenerateOrBroadcastTxCLI(clientCtx client.Context, flagSet *pflag.FlagSet, msgs ...sdk.Msg) error {
 	txf, err := NewFactoryCLI(clientCtx, flagSet)
 	if err != nil {
 		return err
@@ -38,11 +34,7 @@ func GenerateOrBroadcastTxCLI(
 
 // GenerateOrBroadcastTxWithFactory will either generate and print an unsigned transaction
 // or sign it and broadcast it returning an error upon failure.
-func GenerateOrBroadcastTxWithFactory(
-	clientCtx client.Context,
-	txf Factory,
-	msgs ...sdk.Msg,
-) error {
+func GenerateOrBroadcastTxWithFactory(clientCtx client.Context, txf Factory, msgs ...sdk.Msg) error {
 	// Validate all msgs before generating or broadcasting the tx.
 	// We were calling ValidateBasic separately in each CLI handler before.
 	// Right now, we're factorizing that call inside this function.
@@ -123,11 +115,7 @@ func BroadcastTx(clientCtx client.Context, txf Factory, msgs ...sdk.Msg) error {
 		}
 
 		buf := bufio.NewReader(os.Stdin)
-		ok, err := input.GetConfirmation(
-			"confirm transaction before signing and broadcasting",
-			buf,
-			os.Stderr,
-		)
+		ok, err := input.GetConfirmation("confirm transaction before signing and broadcasting", buf, os.Stderr)
 		if err != nil {
 			_, _ = fmt.Fprintf(os.Stderr, "error: %v\ncanceled transaction\n", err)
 			return err
@@ -247,9 +235,7 @@ func checkMultipleSigners(tx authsigning.Tx) error {
 	for _, sig := range sigsV2 {
 		directSigners += countDirectSigners(sig.Data)
 		if directSigners > 1 {
-			return sdkerrors.ErrNotSupported.Wrap(
-				"txs signed with CLI can have maximum 1 DIRECT signer",
-			)
+			return sdkerrors.ErrNotSupported.Wrap("txs signed with CLI can have maximum 1 DIRECT signer")
 		}
 	}
 
@@ -262,13 +248,7 @@ func checkMultipleSigners(tx authsigning.Tx) error {
 // Signing a transaction with mutltiple signers in the DIRECT mode is not supprted and will
 // return an error.
 // An error is returned upon failure.
-func Sign(
-	ctx context.Context,
-	txf Factory,
-	name string,
-	txBuilder client.TxBuilder,
-	overwriteSig bool,
-) error {
+func Sign(ctx context.Context, txf Factory, name string, txBuilder client.TxBuilder, overwriteSig bool) error {
 	if txf.keybase == nil {
 		return errors.New("keybase must be set prior to signing a transaction")
 	}
@@ -277,9 +257,7 @@ func Sign(
 	signMode := txf.signMode
 	if signMode == signing.SignMode_SIGN_MODE_UNSPECIFIED {
 		// use the SignModeHandler's default mode if unspecified
-		signMode, err = authsigning.APISignModeToInternal(
-			txf.txConfig.SignModeHandler().DefaultMode(),
-		)
+		signMode, err = authsigning.APISignModeToInternal(txf.txConfig.SignModeHandler().DefaultMode())
 		if err != nil {
 			return err
 		}
@@ -344,13 +322,7 @@ func Sign(
 		return err
 	}
 
-	bytesToSign, err := authsigning.GetSignBytesAdapter(
-		ctx,
-		txf.txConfig.SignModeHandler(),
-		signMode,
-		signerData,
-		txBuilder.GetTx(),
-	)
+	bytesToSign, err := authsigning.GetSignBytesAdapter(ctx, txf.txConfig.SignModeHandler(), signMode, signerData, txBuilder.GetTx())
 	if err != nil {
 		return err
 	}
@@ -398,11 +370,7 @@ func (gr GasEstimateResponse) String() string {
 }
 
 // makeAuxSignerData generates an AuxSignerData from the client inputs.
-func makeAuxSignerData(
-	clientCtx client.Context,
-	f Factory,
-	msgs ...sdk.Msg,
-) (tx.AuxSignerData, error) {
+func makeAuxSignerData(clientCtx client.Context, f Factory, msgs ...sdk.Msg) (tx.AuxSignerData, error) {
 	b := NewAuxTxBuilder()
 	fromAddress, name, _, err := client.GetFromFields(clientCtx, clientCtx.Keyring, clientCtx.From)
 	if err != nil {
