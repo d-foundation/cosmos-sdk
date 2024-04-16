@@ -80,7 +80,7 @@ func NewFactoryCLI(clientCtx client.Context, flagSet *pflag.FlagSet) (Factory, e
 	// These are Base64 encoded bytes
 	var extOpts []*codectypes.Any
 	vp, _ := flagSet.GetBytesBase64(flags.FlagVerifiablePresentation)
-	if len(vp) == 1 {
+	if len(vp) != 0 {
 		// Set the verifiable presentation as extention option
 		value := sdjwttypes.VerifiablePresentation{
 			Presentation: vp,
@@ -93,8 +93,6 @@ func NewFactoryCLI(clientCtx client.Context, flagSet *pflag.FlagSet) (Factory, e
 				Value:   valueBytes,
 			},
 		}
-	} else if len(vp) > 1 {
-		return Factory{}, errors.New("verifiable presentation is supported")
 	}
 
 	gasAdj, _ := flagSet.GetFloat64(flags.FlagGasAdjustment)
