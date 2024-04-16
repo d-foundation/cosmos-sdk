@@ -125,7 +125,7 @@ func AddTxFlagsToCmd(cmd *cobra.Command) {
 	}
 	f.Uint64P(FlagAccountNumber, "a", 0, "The account number of the signing account (offline mode only)")
 	f.Uint64P(FlagSequence, "s", 0, "The sequence number of the signing account (offline mode only)")
-	f.BytesBase64(FlagVerifiablePresentation, []byte{}, "Required Verifiable Presentation for all tranasactions")
+	f.BytesBase64(FlagVerifiablePresentation, []byte{}, "Required Verifiable Presentation for tranasactions")
 	f.String(FlagNote, "", "Note to add a description to the transaction (previously --memo)")
 	f.String(FlagFees, "", "Fees to pay along with transaction; eg: 10uatom")
 	f.String(FlagGasPrices, "", "Gas prices in decimal format to determine the transaction fee (e.g. 0.1uatom)")

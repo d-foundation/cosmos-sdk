@@ -78,21 +78,23 @@ func NewFactoryCLI(clientCtx client.Context, flagSet *pflag.FlagSet) (Factory, e
 
 	// Check there is verifiable presentation
 	// These are Base64 encoded bytes
+	var extOpts []*codectypes.Any
 	vp, _ := flagSet.GetBytesBase64(flags.FlagVerifiablePresentation)
-	if len(vp) == 0 {
-		return Factory{}, errors.New("Verifiable Presentation cannot be empty")
-	}
-	// Set the verifiable presentation as extention option
-	value := sdjwttypes.VerifiablePresentation{
-		Presentation: vp,
-	}
-	valueBytes, _ := value.Marshal()
+	if len(vp) == 1 {
+		// Set the verifiable presentation as extention option
+		value := sdjwttypes.VerifiablePresentation{
+			Presentation: vp,
+		}
+		valueBytes, _ := value.Marshal()
 
-	extOpts := []*codectypes.Any{
-		{
-			TypeUrl: sdjwt.ExtensionOptionTypeUrl,
-			Value:   valueBytes,
-		},
+		extOpts = []*codectypes.Any{
+			{
+				TypeUrl: sdjwt.ExtensionOptionTypeUrl,
+				Value:   valueBytes,
+			},
+		}
+	} else if len(vp) > 1 {
+		return Factory{}, errors.New("verifiable presentation is supported")
 	}
 
 	gasAdj, _ := flagSet.GetFloat64(flags.FlagGasAdjustment)
@@ -409,6 +411,8 @@ func (f Factory) PrintUnsignedTx(clientCtx client.Context, msgs ...sdk.Msg) erro
 
 	json, err := encoder(unsignedTx.GetTx())
 	if err != nil {
+		return err
+	}
 
 	return clientCtx.PrintString(fmt.Sprintf("%s\n", json))
 }
