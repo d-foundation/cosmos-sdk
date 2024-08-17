@@ -45,7 +45,7 @@ require (
 	github.com/magiconair/properties v1.8.7
 	github.com/manifoldco/promptui v0.9.0
 	github.com/mattn/go-isatty v0.0.20
-	github.com/nymlab/protocol v0.0.0-20240222193452-94d9e205d4e8
+	github.com/nymlab/protocol v0.0.0-20240817110714-7a82951aafb4
 	github.com/prometheus/client_golang v1.18.0
 	github.com/prometheus/common v0.47.0
 	github.com/rs/zerolog v1.32.0
@@ -60,7 +60,7 @@ require (
 	golang.org/x/sync v0.6.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20240205150955-31a09d347014
 	google.golang.org/grpc v1.62.0
-	google.golang.org/protobuf v1.33.0
+	google.golang.org/protobuf v1.34.1
 	gotest.tools/v3 v3.5.1
 	pgregory.net/rapid v1.1.0
 	sigs.k8s.io/yaml v1.4.0
