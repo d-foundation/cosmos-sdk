@@ -588,8 +588,8 @@ github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLA
 github.com/nxadm/tail v1.4.4/go.mod h1:kenIhsEOeOJmVchQTgglprH7qJGnHDVpk1VPCcaMI8A=
 github.com/nxadm/tail v1.4.8 h1:nPr65rt6Y5JFSKQO7qToXr7pePgD6Gwiw05lkbyAQTE=
 github.com/nxadm/tail v1.4.8/go.mod h1:+ncqLTQzXmGhMZNUePPaPqPvBxHAIsmXswZKocGu+AU=
-github.com/nymlab/protocol v0.0.0-20240817110714-7a82951aafb4 h1:nxbUEIBJezQeuK2sfAM47h7oSfWgaezB3WCRIXCvDtk=
-github.com/nymlab/protocol v0.0.0-20240817110714-7a82951aafb4/go.mod h1:Pk7PFAd+lWlZAtmdwhnN1hgiVdMhS0gxe600+ECOdQg=
+github.com/nymlab/protocol v0.0.0-20240817170941-991fdaa49a8f h1:19HQ7LfHCpMEq1ZowXBJEdJramFQmf/yZtXszwZxKgQ=
+github.com/nymlab/protocol v0.0.0-20240817170941-991fdaa49a8f/go.mod h1:TP1FYOFog3UPs3PBYYyOE1BKydaUDmZNtxjQac9w1pc=
 github.com/oasisprotocol/curve25519-voi v0.0.0-20230904125328-1f23a7beb09a h1:dlRvE5fWabOchtH7znfiFCcOvmIYgOeAS5ifBXBlh9Q=
 github.com/oasisprotocol/curve25519-voi v0.0.0-20230904125328-1f23a7beb09a/go.mod h1:hVoHR2EVESiICEMbg137etN/Lx+lSrHPTD39Z/uE+2s=
 github.com/oklog/oklog v0.3.2/go.mod h1:FCV+B7mhrz4o+ueLpx+KqkyXRGMWOYEvfiXtdGtbWGs=

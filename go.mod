@@ -45,7 +45,7 @@ require (
 	github.com/magiconair/properties v1.8.7
 	github.com/manifoldco/promptui v0.9.0
 	github.com/mattn/go-isatty v0.0.20
-	github.com/nymlab/protocol v0.0.0-20240817110714-7a82951aafb4
+	github.com/nymlab/protocol v0.0.0-20240817170941-991fdaa49a8f
 	github.com/prometheus/client_golang v1.18.0
 	github.com/prometheus/common v0.47.0
 	github.com/rs/zerolog v1.32.0

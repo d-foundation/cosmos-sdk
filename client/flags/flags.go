@@ -89,7 +89,7 @@ const (
 	FlagLogLevel   = "log_level"
 	FlagLogFormat  = "log_format"
 	FlagLogNoColor = "log_no_color"
-	// Flag for PTD
+	// Flag for DChain
 	FlagVerifiablePresentation = "verifiable-presentation"
 )
 
