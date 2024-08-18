@@ -20,8 +20,8 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
-	vcv "github.com/nymlab/protocol/x/vcv"
-	vcvtypes "github.com/nymlab/protocol/x/vcv/types"
+	vcv "github.com/d-foundation/protocol/x/vcv"
+	vcvtypes "github.com/d-foundation/protocol/x/vcv/types"
 )
 
 // Factory defines a client transaction factory that facilitates generating and
