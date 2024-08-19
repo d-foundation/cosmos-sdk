@@ -1,6 +1,6 @@
 go 1.21
 
-module github.com/nymlab/cosmos-sdk
+module github.com/d-foundation/cosmos-sdk
 
 require (
 	cosmossdk.io/api v0.7.3
