@@ -27,7 +27,7 @@ require (
 	github.com/cosmos/gogogateway v1.2.0
 	github.com/cosmos/gogoproto v1.4.11
 	github.com/cosmos/ledger-cosmos-go v0.13.3
-	github.com/d-foundation/protocol v0.0.0-20240820021812-f796e393ae90
+	github.com/d-foundation/protocol v0.0.0-20240820023247-46b7b0d1be82
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0
 	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.4
