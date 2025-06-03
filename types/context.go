@@ -6,7 +6,6 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	"github.com/cosmos/gogoproto/proto"
 
 	"cosmossdk.io/core/comet"
 	"cosmossdk.io/core/header"
@@ -54,6 +53,7 @@ type Context struct {
 	blockGasMeter        storetypes.GasMeter
 	checkTx              bool
 	recheckTx            bool // if recheckTx == true, then checkTx must also be true
+	sigverifyTx          bool // when run simulation, because the private key corresponding to the account in the genesis.json randomly generated, we must skip the sigverify.
 	execMode             ExecMode
 	minGasPrice          DecCoins
 	consParams           cmtproto.ConsensusParams
@@ -82,6 +82,7 @@ func (c Context) GasMeter() storetypes.GasMeter                 { return c.gasMe
 func (c Context) BlockGasMeter() storetypes.GasMeter            { return c.blockGasMeter }
 func (c Context) IsCheckTx() bool                               { return c.checkTx }
 func (c Context) IsReCheckTx() bool                             { return c.recheckTx }
+func (c Context) IsSigverifyTx() bool                           { return c.sigverifyTx }
 func (c Context) ExecMode() ExecMode                            { return c.execMode }
 func (c Context) MinGasPrices() DecCoins                        { return c.minGasPrice }
 func (c Context) EventManager() EventManagerI                   { return c.eventManager }
@@ -92,10 +93,9 @@ func (c Context) StreamingManager() storetypes.StreamingManager { return c.strea
 func (c Context) CometInfo() comet.BlockInfo                    { return c.cometInfo }
 func (c Context) HeaderInfo() header.Info                       { return c.headerInfo }
 
-// clone the header before returning
+// BlockHeader returns the header by value.
 func (c Context) BlockHeader() cmtproto.Header {
-	msg := proto.Clone(&c.header).(*cmtproto.Header)
-	return *msg
+	return c.header
 }
 
 // HeaderHash returns a copy of the header hash obtained during abci.RequestBeginBlock
@@ -131,6 +131,7 @@ func NewContext(ms storetypes.MultiStore, header cmtproto.Header, isCheckTx bool
 		header:               header,
 		chainID:              header.ChainID,
 		checkTx:              isCheckTx,
+		sigverifyTx:          true,
 		logger:               logger,
 		gasMeter:             storetypes.NewInfiniteGasMeter(),
 		minGasPrice:          DecCoins{},
@@ -260,6 +261,12 @@ func (c Context) WithIsReCheckTx(isRecheckTx bool) Context {
 	return c
 }
 
+// WithIsSigverifyTx called with true will sigverify in auth module
+func (c Context) WithIsSigverifyTx(isSigverifyTx bool) Context {
+	c.sigverifyTx = isSigverifyTx
+	return c
+}
+
 // WithExecMode returns a Context with an updated ExecMode.
 func (c Context) WithExecMode(m ExecMode) Context {
 	c.execMode = m
@@ -315,12 +322,12 @@ func (c Context) IsZero() bool {
 	return c.ms == nil
 }
 
-func (c Context) WithValue(key, value interface{}) Context {
+func (c Context) WithValue(key, value any) Context {
 	c.baseCtx = context.WithValue(c.baseCtx, key, value)
 	return c
 }
 
-func (c Context) Value(key interface{}) interface{} {
+func (c Context) Value(key any) any {
 	if key == SdkContextKey {
 		return c
 	}

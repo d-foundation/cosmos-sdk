@@ -240,7 +240,7 @@ stop-node-on-err = {{ .Streaming.ABCI.StopNodeOnErr }}
 
 [mempool]
 # Setting max-txs to 0 will allow for a unbounded amount of transactions in the mempool.
-# Setting max_txs to negative 1 (-1) will disable transactions from being inserted into the mempool.
+# Setting max_txs to negative 1 (-1) will disable transactions from being inserted into the mempool (no-op mempool).
 # Setting max_txs to a positive number (> 0) will limit the number of transactions in the mempool, by the specified amount.
 #
 # Note, this configuration only applies to SDK built-in app-side mempool
@@ -283,7 +283,7 @@ func SetConfigTemplate(customTemplate string) {
 
 // WriteConfigFile renders config using the template and writes it to
 // configFilePath.
-func WriteConfigFile(configFilePath string, config interface{}) {
+func WriteConfigFile(configFilePath string, config any) {
 	var buffer bytes.Buffer
 
 	if err := configTemplate.Execute(&buffer, config); err != nil {

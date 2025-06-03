@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"testing"
+	"time"
 
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/stretchr/testify/require"
@@ -115,7 +116,7 @@ func (s *MempoolTestSuite) TestTxOrder() {
 	}
 	for i, tt := range tests {
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
-			pool := mempool.NewSenderNonceMempool(mempool.SenderNonceSeedOpt(tt.seed))
+			pool := mempool.NewSenderNonceMempool(mempool.SenderNonceMaxTxOpt(5000), mempool.SenderNonceSeedOpt(tt.seed))
 			// create test txs and insert into mempool
 			for i, ts := range tt.txs {
 				tx := testTx{id: i, priority: int64(ts.p), nonce: uint64(ts.n), address: ts.a}
@@ -169,11 +170,27 @@ func (s *MempoolTestSuite) TestMaxTx() {
 	require.Equal(t, mempool.ErrMempoolTxMaxCapacity, err)
 }
 
+func (s *MempoolTestSuite) TestTxRejectedWithUnorderedAndSequence() {
+	t := s.T()
+	ctx := sdk.NewContext(nil, cmtproto.Header{}, false, log.NewNopLogger())
+	accounts := simtypes.RandomAccounts(rand.New(rand.NewSource(0)), 1)
+	mp := mempool.NewSenderNonceMempool(mempool.SenderNonceMaxTxOpt(5000))
+
+	txSender := testTx{
+		nonce:     15,
+		address:   accounts[0].Address,
+		priority:  rand.Int63(),
+		unordered: true,
+	}
+	err := mp.Insert(ctx, txSender)
+	require.ErrorContains(t, err, "unordered txs must not have sequence set")
+}
+
 func (s *MempoolTestSuite) TestTxNotFoundOnSender() {
 	t := s.T()
 	ctx := sdk.NewContext(nil, cmtproto.Header{}, false, log.NewNopLogger())
 	accounts := simtypes.RandomAccounts(rand.New(rand.NewSource(0)), 1)
-	mp := mempool.NewSenderNonceMempool()
+	mp := mempool.NewSenderNonceMempool(mempool.SenderNonceMaxTxOpt(5000))
 
 	txSender := testTx{
 		nonce:    0,
@@ -192,4 +209,68 @@ func (s *MempoolTestSuite) TestTxNotFoundOnSender() {
 	require.NoError(t, err)
 	err = mp.Remove(tx)
 	require.Equal(t, mempool.ErrTxNotFound, err)
+}
+
+func (s *MempoolTestSuite) TestUnorderedTx() {
+	t := s.T()
+
+	ctx := sdk.NewContext(nil, cmtproto.Header{}, false, log.NewNopLogger())
+	accounts := simtypes.RandomAccounts(rand.New(rand.NewSource(0)), 2)
+	sa := accounts[0].Address
+	sb := accounts[1].Address
+
+	mp := mempool.NewSenderNonceMempool(mempool.SenderNonceMaxTxOpt(5000))
+
+	now := time.Now()
+	oneHour := now.Add(1 * time.Hour)
+	thirtyMin := now.Add(30 * time.Minute)
+	twoHours := now.Add(2 * time.Hour)
+	fifteenMin := now.Add(15 * time.Minute)
+
+	txs := []testTx{
+		{id: 0, address: sa, timeout: &oneHour, unordered: true},
+		{id: 1, address: sa, timeout: &thirtyMin, unordered: true},
+		{id: 2, address: sb, timeout: &twoHours, unordered: true},
+		{id: 3, address: sb, timeout: &fifteenMin, unordered: true},
+	}
+
+	for _, tx := range txs {
+		c := ctx.WithPriority(tx.priority)
+		require.NoError(t, mp.Insert(c, tx))
+	}
+
+	require.Equal(t, 4, mp.CountTx())
+
+	orderedTxs := fetchTxs(mp.Select(ctx, nil), 100000)
+	require.Equal(t, len(txs), len(orderedTxs))
+
+	// Because the sender is selected randomly it can be any of these options
+	acceptableOptions := [][]int{
+		{3, 1, 2, 0},
+		{3, 1, 0, 2},
+		{3, 2, 1, 0},
+		{1, 3, 0, 2},
+		{1, 3, 2, 0},
+		{1, 0, 3, 2},
+	}
+
+	orderedTxsIds := make([]int, len(orderedTxs))
+	for i, tx := range orderedTxs {
+		orderedTxsIds[i] = tx.(testTx).id
+	}
+
+	anyAcceptableOrder := false
+	for _, option := range acceptableOptions {
+		for i, tx := range orderedTxs {
+			if tx.(testTx).id != txs[option[i]].id {
+				break
+			}
+
+			if i == len(orderedTxs)-1 {
+				anyAcceptableOrder = true
+			}
+		}
+	}
+
+	require.True(t, anyAcceptableOrder, "expected any of %v but got %v", acceptableOptions, orderedTxsIds)
 }

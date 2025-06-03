@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"testing"
+	"time"
 
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/stretchr/testify/require"
@@ -52,6 +53,21 @@ type testTx struct {
 	address  sdk.AccAddress
 	// useful for debugging
 	strAddress string
+	unordered  bool
+	timeout    *time.Time
+}
+
+// GetTimeoutTimeStamp implements types.TxWithUnordered.
+func (tx testTx) GetTimeoutTimeStamp() time.Time {
+	if tx.timeout == nil {
+		return time.Time{}
+	}
+	return *tx.timeout
+}
+
+// GetUnordered implements types.TxWithUnordered.
+func (tx testTx) GetUnordered() bool {
+	return tx.unordered
 }
 
 func (tx testTx) GetSigners() ([][]byte, error) { panic("not implemented") }
@@ -137,7 +153,7 @@ func (s *MempoolTestSuite) TestDefaultMempool() {
 	txCount := 1000
 	var txs []testTx
 
-	for i := 0; i < txCount; i++ {
+	for i := range txCount {
 		acc := accounts[i%len(accounts)]
 		tx := testTx{
 			nonce:    0,
@@ -210,7 +226,7 @@ type MempoolTestSuite struct {
 
 func (s *MempoolTestSuite) resetMempool() {
 	s.iterations = 0
-	s.mempool = mempool.NewSenderNonceMempool()
+	s.mempool = mempool.NewSenderNonceMempool(mempool.SenderNonceMaxTxOpt(5000))
 }
 
 func (s *MempoolTestSuite) SetupTest() {

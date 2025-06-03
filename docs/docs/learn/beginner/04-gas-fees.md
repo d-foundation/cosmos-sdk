@@ -26,7 +26,7 @@ In the Cosmos SDK, `gas` is a special unit that is used to track the consumption
 In the Cosmos SDK, `gas` is a simple alias for `uint64`, and is managed by an object called a _gas meter_. Gas meters implement the `GasMeter` interface
 
 ```go reference
-https://github.com/cosmos/cosmos-sdk/blob/v0.50.0-alpha.0/store/types/gas.go#L40-L51
+https://github.com/cosmos/cosmos-sdk/blob/v0.53.0-rc.2/store/types/gas.go#L40-L51
 ```
 
 where:
@@ -56,20 +56,24 @@ Gas consumption can be done manually, generally by the module developer in the [
 
 ### Block Gas Meter
 
-`ctx.BlockGasMeter()` is the gas meter used to track gas consumption per block and make sure it does not go above a certain limit. A new instance of the `BlockGasMeter` is created each time [`FinalizeBlock`](../advanced/00-baseapp.md#finalizeblock) is called. The `BlockGasMeter` is finite, and the limit of gas per block is defined in the application's consensus parameters. By default, Cosmos SDK applications use the default consensus parameters provided by CometBFT:
+`ctx.BlockGasMeter()` is the gas meter used to track gas consumption per block and make sure it does not go above a certain limit. 
 
-```go reference
-https://github.com/cometbft/cometbft/blob/v0.37.0/types/params.go#L66-L105
-```
-
-When a new [transaction](../advanced/01-transactions.md) is being processed via `FinalizeBlock`, the current value of `BlockGasMeter` is checked to see if it is above the limit. If it is, the transaction fails and returned to the consensus engine as a failed transaction. This can happen even with the first transaction in a block, as `FinalizeBlock` itself can consume gas. If not, the transaction is processed normally. At the end of `FinalizeBlock`, the gas tracked by `ctx.BlockGasMeter()` is increased by the amount consumed to process the transaction:
+During the genesis phase, gas consumption is unlimited to accommodate initialisation transactions. 
 
 ```go
-ctx.BlockGasMeter().ConsumeGas(
-	ctx.GasMeter().GasConsumedToLimit(),
-	"block gas meter",
-)
+app.finalizeBlockState.SetContext(app.finalizeBlockState.Context().WithBlockGasMeter(storetypes.NewInfiniteGasMeter()))
 ```
+
+Following the genesis block, the block gas meter is set to a finite value by the SDK. This transition is facilitated by the consensus engine (e.g., CometBFT) calling the `RequestFinalizeBlock` function, which in turn triggers the SDK's `FinalizeBlock` method. Within `FinalizeBlock`, `internalFinalizeBlock` is executed, performing necessary state updates and function executions. The block gas meter, initialised each with a finite limit, is then incorporated into the context for transaction execution, ensuring gas consumption does not exceed the block's gas limit and is reset at the end of each block.
+
+Modules within the Cosmos SDK can consume block gas at any point during their execution by utilising the `ctx`. This gas consumption primarily occurs during state read/write operations and transaction processing. The block gas meter, accessible via `ctx.BlockGasMeter()`, monitors the total gas usage within a block, enforcing the gas limit to prevent excessive computation. This ensures that gas limits are adhered to on a per-block basis, starting from the first block post-genesis.
+
+```go
+gasMeter := app.getBlockGasMeter(app.finalizeBlockState.Context())
+app.finalizeBlockState.SetContext(app.finalizeBlockState.Context().WithBlockGasMeter(gasMeter))
+```
+
+This above shows the general mechanism for setting the block gas meter with a finite limit based on the block's consensus parameters.
 
 ## AnteHandler
 
@@ -80,13 +84,13 @@ The anteHandler is not implemented in the core Cosmos SDK but in a module. That 
 * Verify that the transactions are of the correct type. Transaction types are defined in the module that implements the `anteHandler`, and they follow the transaction interface:
 
 ```go reference
-https://github.com/cosmos/cosmos-sdk/blob/v0.50.0-alpha.0/types/tx_msg.go#L51-L56
+https://github.com/cosmos/cosmos-sdk/blob/v0.53.0-rc.2/types/tx_msg.go#L53-L58
 ```
 
   This enables developers to play with various types for the transaction of their application. In the default `auth` module, the default transaction type is `Tx`: 
 
 ```protobuf reference
-https://github.com/cosmos/cosmos-sdk/blob/v0.50.0-alpha.0/proto/cosmos/tx/v1beta1/tx.proto#L14-L27
+https://github.com/cosmos/cosmos-sdk/blob/v0.53.0-rc.2/proto/cosmos/tx/v1beta1/tx.proto#L15-L28
 ```
 
 * Verify signatures for each [`message`](../../build/building-modules/02-messages-and-queries.md#messages) contained in the transaction. Each `message` should be signed by one or multiple sender(s), and these signatures must be verified in the `anteHandler`.
