@@ -84,6 +84,13 @@ func SetIAVLDisableFastNode(disable bool) func(*BaseApp) {
 	return func(bapp *BaseApp) { bapp.cms.SetIAVLDisableFastNode(disable) }
 }
 
+// SetIAVLSyncPruning set sync/async pruning in the IAVL store. Developers should rarely use this.
+// This option was added to allow the `Prune` command to force synchronous pruning, which is needed to allow the
+// command to wait before returning.
+func SetIAVLSyncPruning(syncPruning bool) func(*BaseApp) {
+	return func(bapp *BaseApp) { bapp.cms.SetIAVLSyncPruning(syncPruning) }
+}
+
 // SetInterBlockCache provides a BaseApp option function that sets the
 // inter-block cache.
 func SetInterBlockCache(cache storetypes.MultiStorePersistentCache) func(*BaseApp) {
@@ -162,7 +169,7 @@ func (app *BaseApp) SetDB(db dbm.DB) {
 
 func (app *BaseApp) SetCMS(cms storetypes.CommitMultiStore) {
 	if app.sealed {
-		panic("SetEndBlocker() on sealed BaseApp")
+		panic("SetCMS() on sealed BaseApp")
 	}
 
 	app.cms = cms
@@ -260,6 +267,11 @@ func (app *BaseApp) SetFauxMerkleMode() {
 	app.fauxMerkleMode = true
 }
 
+// SetNotSigverify during simulation testing, transaction signature verification needs to be ignored.
+func (app *BaseApp) SetNotSigverifyTx() {
+	app.sigverifyTx = false
+}
+
 // SetCommitMultiStoreTracer sets the store tracer on the BaseApp's underlying
 // CommitMultiStore.
 func (app *BaseApp) SetCommitMultiStoreTracer(w io.Writer) {
@@ -338,6 +350,15 @@ func (app *BaseApp) SetPrepareProposal(handler sdk.PrepareProposalHandler) {
 	app.prepareProposal = handler
 }
 
+// SetCheckTx sets the checkTx function for the BaseApp.
+func (app *BaseApp) SetCheckTxHandler(handler sdk.CheckTxHandler) {
+	if app.sealed {
+		panic("SetCheckTxHandler() on sealed BaseApp")
+	}
+
+	app.checkTxHandler = handler
+}
+
 func (app *BaseApp) SetExtendVoteHandler(handler sdk.ExtendVoteHandler) {
 	if app.sealed {
 		panic("SetExtendVoteHandler() on sealed BaseApp")
@@ -371,4 +392,14 @@ func (app *BaseApp) SetStreamingManager(manager storetypes.StreamingManager) {
 // SetDisableBlockGasMeter sets the disableBlockGasMeter flag for the BaseApp.
 func (app *BaseApp) SetDisableBlockGasMeter(disableBlockGasMeter bool) {
 	app.disableBlockGasMeter = disableBlockGasMeter
+}
+
+// SetMsgServiceRouter sets the MsgServiceRouter of a BaseApp.
+func (app *BaseApp) SetMsgServiceRouter(msgServiceRouter *MsgServiceRouter) {
+	app.msgServiceRouter = msgServiceRouter
+}
+
+// SetGRPCQueryRouter sets the GRPCQueryRouter of the BaseApp.
+func (app *BaseApp) SetGRPCQueryRouter(grpcQueryRouter *GRPCQueryRouter) {
+	app.grpcQueryRouter = grpcQueryRouter
 }

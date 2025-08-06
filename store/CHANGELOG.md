@@ -23,7 +23,23 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 # Changelog
 
-## Unreleased
+## v1.1.2 (March 31, 2025)
+
+### Bug Fixes
+
+* [#24090](https://github.com/cosmos/cosmos-sdk/pull/24090) Running the `prune` command now disables async pruning.
+
+## v1.1.1 (September 06, 2024)
+
+### Improvements
+
+* [#21574](https://github.com/cosmos/cosmos-sdk/pull/21574) Upgrade IVL to IAVL 1.2.0.
+
+## v1.1.0 (March 20, 2024)
+
+### Improvements
+
+* [#19770](https://github.com/cosmos/cosmos-sdk/pull/19770) Upgrade IAVL to IAVL v1.1.1.
 
 ## v1.0.2 (January 10, 2024)
 

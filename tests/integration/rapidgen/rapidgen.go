@@ -129,9 +129,9 @@ var (
 		GenType(&disttypes.MsgWithdrawDelegatorReward{}, &distapi.MsgWithdrawDelegatorReward{}, GenOpts),
 		GenType(&disttypes.MsgWithdrawValidatorCommission{}, &distapi.MsgWithdrawValidatorCommission{}, GenOpts),
 		GenType(&disttypes.MsgSetWithdrawAddress{}, &distapi.MsgSetWithdrawAddress{}, GenOpts),
-		GenType(&disttypes.MsgFundCommunityPool{}, &distapi.MsgFundCommunityPool{}, GenOpts), // nolint:staticcheck // testing legacy code path
+		GenType(&disttypes.MsgFundCommunityPool{}, &distapi.MsgFundCommunityPool{}, GenOpts),
 		GenType(&disttypes.MsgUpdateParams{}, &distapi.MsgUpdateParams{}, GenOpts.WithDisallowNil()),
-		GenType(&disttypes.MsgCommunityPoolSpend{}, &distapi.MsgCommunityPoolSpend{}, GenOpts), // nolint:staticcheck // testing legacy code path
+		GenType(&disttypes.MsgCommunityPoolSpend{}, &distapi.MsgCommunityPoolSpend{}, GenOpts),
 		GenType(&disttypes.MsgDepositValidatorRewardsPool{}, &distapi.MsgDepositValidatorRewardsPool{}, GenOpts),
 
 		// evidence
@@ -231,7 +231,6 @@ var (
 	NonsignableTypes = []GeneratedType{
 		GenType(&authtypes.Params{}, &authapi.Params{}, GenOpts),
 		GenType(&authtypes.BaseAccount{}, &authapi.BaseAccount{}, GenOpts.WithAnyTypes(&ed25519.PubKey{})),
-		GenType(&authtypes.ModuleAccount{}, &authapi.ModuleAccount{}, GenOpts.WithAnyTypes(&ed25519.PubKey{})),
 		GenType(&authtypes.ModuleCredential{}, &authapi.ModuleCredential{}, GenOpts),
 
 		GenType(&authztypes.GenericAuthorization{}, &authzapi.GenericAuthorization{}, GenOpts),
@@ -274,8 +273,8 @@ var (
 
 		GenType(&stakingtypes.StakeAuthorization{}, &stakingapi.StakeAuthorization{}, GenOpts),
 
-		GenType(&upgradetypes.CancelSoftwareUpgradeProposal{}, &upgradeapi.CancelSoftwareUpgradeProposal{}, GenOpts),       // nolint:staticcheck // testing legacy code path
-		GenType(&upgradetypes.SoftwareUpgradeProposal{}, &upgradeapi.SoftwareUpgradeProposal{}, GenOpts.WithDisallowNil()), // nolint:staticcheck // testing legacy code path
+		GenType(&upgradetypes.CancelSoftwareUpgradeProposal{}, &upgradeapi.CancelSoftwareUpgradeProposal{}, GenOpts),       //nolint:staticcheck // testing registration of legacy deprecated type
+		GenType(&upgradetypes.SoftwareUpgradeProposal{}, &upgradeapi.SoftwareUpgradeProposal{}, GenOpts.WithDisallowNil()), //nolint:staticcheck // testing registration of legacy deprecated type
 		GenType(&upgradetypes.Plan{}, &upgradeapi.Plan{}, GenOpts.WithDisallowNil()),
 
 		GenType(&vestingtypes.BaseVestingAccount{}, &vestingapi.BaseVestingAccount{}, GenOpts.WithDisallowNil()),

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	gwruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cast"
@@ -21,7 +20,6 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/server"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -45,6 +43,8 @@ var (
 
 // Module init related flags
 const (
+	// Deprecated: this flag is no longer used and will be removed along with x/crisis in the next major
+	// Cosmos SDK release.
 	FlagSkipGenesisInvariants = "x-crisis-skip-assert-invariants"
 )
 
@@ -87,6 +87,8 @@ func (AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) 
 }
 
 // AppModule implements an application module for the crisis module.
+//
+// Deprecated: the crisis module is deprecated and will be removed in the next Cosmos SDK major release.
 type AppModule struct {
 	AppModuleBasic
 
@@ -105,6 +107,8 @@ type AppModule struct {
 // we will call keeper.AssertInvariants during InitGenesis (it may take a significant time)
 // - which doesn't impact the chain security unless 66+% of validators have a wrongly
 // modified genesis file.
+//
+// Deprecated: the crisis module is deprecated and will be removed in the next Cosmos SDK major release.
 func NewAppModule(keeper *keeper.Keeper, skipGenesisInvariants bool, ss exported.Subspace) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
@@ -122,6 +126,8 @@ func (am AppModule) IsOnePerModuleType() {}
 func (am AppModule) IsAppModule() {}
 
 // AddModuleInitFlags implements servertypes.ModuleInitFlags interface.
+//
+// Deprecated: this flag is deprecated and will be removed in the next major Cosmos SDK release.
 func AddModuleInitFlags(startCmd *cobra.Command) {
 	startCmd.Flags().Bool(FlagSkipGenesisInvariants, false, "Skip x/crisis invariants check on startup")
 }
@@ -139,10 +145,8 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 // InitGenesis performs genesis initialization for the crisis module. It returns
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) {
-	start := time.Now()
 	var genesisState types.GenesisState
 	cdc.MustUnmarshalJSON(data, &genesisState)
-	telemetry.MeasureSince(start, "InitGenesis", "crisis", "unmarshal")
 
 	am.keeper.InitGenesis(ctx, &genesisState)
 	if !am.skipGenesisInvariants {

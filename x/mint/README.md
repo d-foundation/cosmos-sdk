@@ -4,6 +4,8 @@ sidebar_position: 1
 
 # `x/mint`
 
+The `x/mint` module handles the regular minting of new tokens in a configurable manner.
+
 ## Contents
 
 * [State](#state)
@@ -25,7 +27,7 @@ sidebar_position: 1
 
 ### The Minting Mechanism
 
-The minting mechanism was designed to:
+The default minting mechanism was designed to:
 
 * allow for a flexible inflation rate determined by market demand targeting a particular bonded-stake ratio
 * effect a balance between market liquidity and staked supply
@@ -39,13 +41,88 @@ which should help provide some liquidity.
 
 It can be broken down in the following way:
 
-* If the inflation rate is below the goal %-bonded the inflation rate will
+* If the actual percentage of bonded tokens is below the goal %-bonded the inflation rate will
    increase until a maximum value is reached
 * If the goal % bonded (67% in Cosmos-Hub) is maintained, then the inflation
    rate will stay constant
-* If the inflation rate is above the goal %-bonded the inflation rate will
+* If the actual percentage of bonded tokens is above the goal %-bonded the inflation rate will
    decrease until a minimum value is reached
 
+### Custom Minters
+
+As of Cosmos SDK v0.53.0, developers can set a custom `MintFn` for the module for specialized token minting logic.
+
+The function signature that a `MintFn` must implement is as follows:
+
+```go
+// MintFn defines the function that needs to be implemented in order to customize the minting process.
+type MintFn func(ctx sdk.Context, k *Keeper) error
+```
+
+This can be passed to the `Keeper` upon creation with an additional `Option`:
+
+```go
+app.MintKeeper = mintkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[minttypes.StoreKey]),
+		app.StakingKeeper,
+		app.AccountKeeper,
+		app.BankKeeper,
+		authtypes.FeeCollectorName,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		// mintkeeper.WithMintFn(CUSTOM_MINT_FN), // custom mintFn can be added here
+	)
+```
+
+#### Custom Minter DI Example
+
+Below is a simple approach to creating a custom mint function with extra dependencies in DI configurations.
+For this basic example, we will make the minter simply double the supply of `foo` coin.
+
+First, we will define a function that takes our required dependencies, and returns a `MintFn`.
+
+```go
+// MyCustomMintFunction is a custom mint function that doubles the supply of `foo` coin.
+func MyCustomMintFunction(bank bankkeeper.BaseKeeper) mintkeeper.MintFn {
+	return func(ctx sdk.Context, k *mintkeeper.Keeper) error {
+		supply := bank.GetSupply(ctx, "foo")
+		err := k.MintCoins(ctx, sdk.NewCoins(supply.Add(supply)))
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+}
+```
+
+Then, pass the function defined above into the `depinject.Supply` function with the required dependencies.
+
+```go
+// NewSimApp returns a reference to an initialized SimApp.
+func NewSimApp(
+    logger log.Logger,
+    db dbm.DB,
+    traceStore io.Writer,
+    loadLatest bool,
+    appOpts servertypes.AppOptions,
+    baseAppOptions ...func(*baseapp.BaseApp),
+) *SimApp {
+    var (
+        app        = &SimApp{}
+        appBuilder *runtime.AppBuilder
+        appConfig = depinject.Configs(
+            AppConfig,
+            depinject.Supply(
+                appOpts,
+                logger,
+                // our custom mint function with the necessary dependency passed in.
+                MyCustomMintFunction(app.BankKeeper),
+            ),
+        )
+	)
+	// ...
+}
+```
 
 ## State
 
@@ -61,7 +138,7 @@ https://github.com/cosmos/cosmos-sdk/blob/v0.47.0-rc1/proto/cosmos/mint/v1beta1/
 
 ### Params
 
-The mint module stores it's params in state with the prefix of `0x01`,
+The mint module stores its params in state with the prefix of `0x01`,
 it can be updated with governance or the address with authority.
 
 * Params: `mint/params -> legacy_amino(params)`
@@ -91,7 +168,7 @@ type InflationCalculationFn func(ctx sdk.Context, minter Minter, params Params, 
 The target annual inflation rate is recalculated each block.
 The inflation is also subject to a rate change (positive or negative)
 depending on the distance from the desired ratio (67%). The maximum rate change
-possible is defined to be 13% per year, however the annual inflation is capped
+possible is defined to be 13% per year, however, the annual inflation is capped
 as between 7% and 20%.
 
 ```go
@@ -169,7 +246,7 @@ A user can query and interact with the `mint` module using the CLI.
 
 #### Query
 
-The `query` commands allow users to query `mint` state.
+The `query` commands allows users to query `mint` state.
 
 ```shell
 simd query mint --help
@@ -177,7 +254,7 @@ simd query mint --help
 
 ##### annual-provisions
 
-The `annual-provisions` command allow users to query the current minting annual provisions value
+The `annual-provisions` command allows users to query the current minting annual provisions value
 
 ```shell
 simd query mint annual-provisions [flags]
@@ -197,7 +274,7 @@ Example Output:
 
 ##### inflation
 
-The `inflation` command allow users to query the current minting inflation value
+The `inflation` command allows users to query the current minting inflation value
 
 ```shell
 simd query mint inflation [flags]
@@ -217,7 +294,7 @@ Example Output:
 
 ##### params
 
-The `params` command allow users to query the current minting parameters
+The `params` command allows users to query the current minting parameters
 
 ```shell
 simd query mint params [flags]
@@ -240,7 +317,7 @@ A user can query the `mint` module using gRPC endpoints.
 
 #### AnnualProvisions
 
-The `AnnualProvisions` endpoint allow users to query the current minting annual provisions value
+The `AnnualProvisions` endpoint allows users to query the current minting annual provisions value
 
 ```shell
 /cosmos.mint.v1beta1.Query/AnnualProvisions
@@ -262,7 +339,7 @@ Example Output:
 
 #### Inflation
 
-The `Inflation` endpoint allow users to query the current minting inflation value
+The `Inflation` endpoint allows users to query the current minting inflation value
 
 ```shell
 /cosmos.mint.v1beta1.Query/Inflation
@@ -284,7 +361,7 @@ Example Output:
 
 #### Params
 
-The `Params` endpoint allow users to query the current minting parameters
+The `Params` endpoint allows users to query the current minting parameters
 
 ```shell
 /cosmos.mint.v1beta1.Query/Params

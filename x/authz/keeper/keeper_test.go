@@ -6,8 +6,8 @@ import (
 
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	cmttime "github.com/cometbft/cometbft/types/time"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/mock/gomock"
 
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
@@ -68,14 +68,14 @@ func (s *TestSuite) SetupTest() {
 	// gomock initializations
 	ctrl := gomock.NewController(s.T())
 	s.accountKeeper = authztestutil.NewMockAccountKeeper(ctrl)
-
 	s.accountKeeper.EXPECT().AddressCodec().Return(address.NewBech32Codec("cosmos")).AnyTimes()
 
 	s.bankKeeper = authztestutil.NewMockBankKeeper(ctrl)
 	banktypes.RegisterInterfaces(s.encCfg.InterfaceRegistry)
 	banktypes.RegisterMsgServer(s.baseApp.MsgServiceRouter(), s.bankKeeper)
+	s.bankKeeper.EXPECT().BlockedAddr(gomock.Any()).Return(false).AnyTimes()
 
-	s.authzKeeper = authzkeeper.NewKeeper(storeService, s.encCfg.Codec, s.baseApp.MsgServiceRouter(), s.accountKeeper)
+	s.authzKeeper = authzkeeper.NewKeeper(storeService, s.encCfg.Codec, s.baseApp.MsgServiceRouter(), s.accountKeeper).SetBankKeeper(s.bankKeeper)
 
 	queryHelper := baseapp.NewQueryServerTestHelper(s.ctx, s.encCfg.InterfaceRegistry)
 	authz.RegisterQueryServer(queryHelper, s.authzKeeper)
@@ -148,8 +148,8 @@ func (s *TestSuite) TestKeeperIter() {
 	e := ctx.BlockTime().AddDate(1, 0, 0)
 	sendAuthz := banktypes.NewSendAuthorization(coins100, nil)
 
-	s.authzKeeper.SaveGrant(ctx, granteeAddr, granterAddr, sendAuthz, &e)
-	s.authzKeeper.SaveGrant(ctx, granteeAddr, granter2Addr, sendAuthz, &e)
+	s.Require().NoError(s.authzKeeper.SaveGrant(ctx, granteeAddr, granterAddr, sendAuthz, &e))
+	s.Require().NoError(s.authzKeeper.SaveGrant(ctx, granteeAddr, granter2Addr, sendAuthz, &e))
 
 	s.authzKeeper.IterateGrants(ctx, func(granter, grantee sdk.AccAddress, grant authz.Grant) bool {
 		s.Require().Equal(granteeAddr, grantee)
@@ -189,7 +189,7 @@ func (s *TestSuite) TestDispatchAction() {
 			"authorization not found",
 			func() sdk.Context {
 				// remove any existing authorizations
-				s.authzKeeper.DeleteGrant(s.ctx, granteeAddr, granterAddr, bankSendAuthMsgType)
+				_ = s.authzKeeper.DeleteGrant(s.ctx, granteeAddr, granterAddr, bankSendAuthMsgType)
 				return s.ctx
 			},
 			func() {},

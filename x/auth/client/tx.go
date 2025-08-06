@@ -53,7 +53,7 @@ func SignTx(txFactory tx.Factory, clientCtx client.Context, name string, txBuild
 		return err
 	}
 	if !isTxSigner(addr, signers) {
-		return fmt.Errorf("%s: %s", errors.ErrorInvalidSigner, name)
+		return fmt.Errorf("%w: %s", errors.ErrorInvalidSigner, name)
 	}
 	if !offline {
 		txFactory, err = populateAccountFromState(txFactory, clientCtx, addr)
@@ -76,16 +76,6 @@ func SignTxWithSignerAddress(txFactory tx.Factory, clientCtx client.Context, add
 	// Multisigs only support LEGACY_AMINO_JSON signing.
 	if txFactory.SignMode() == signing.SignMode_SIGN_MODE_UNSPECIFIED {
 		txFactory = txFactory.WithSignMode(signing.SignMode_SIGN_MODE_LEGACY_AMINO_JSON)
-	}
-
-	// check whether the address is a signer
-	signers, err := txBuilder.GetTx().GetSigners()
-	if err != nil {
-		return err
-	}
-
-	if !isTxSigner(addr, signers) {
-		return fmt.Errorf("%s: %s", errors.ErrorInvalidSigner, name)
 	}
 
 	if !offline {
@@ -131,7 +121,7 @@ func ReadTxsFromInput(txCfg client.TxConfig, filenames ...string) (scanner *Batc
 				return nil, fmt.Errorf("couldn't read %s: %w", f, err)
 			}
 
-			if _, err := buf.WriteString(string(bytes)); err != nil {
+			if _, err := buf.Write(bytes); err != nil {
 				return nil, fmt.Errorf("couldn't write to merged file: %w", err)
 			}
 		}

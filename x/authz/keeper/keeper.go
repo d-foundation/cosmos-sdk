@@ -34,6 +34,7 @@ type Keeper struct {
 	cdc          codec.Codec
 	router       baseapp.MessageRouter
 	authKeeper   authz.AccountKeeper
+	bankKeeper   authz.BankKeeper
 }
 
 // NewKeeper constructs a message authorization Keeper
@@ -44,6 +45,13 @@ func NewKeeper(storeService corestoretypes.KVStoreService, cdc codec.Codec, rout
 		router:       router,
 		authKeeper:   ak,
 	}
+}
+
+// Super ugly hack to not be breaking in v0.50 and v0.47
+// DO NOT USE.
+func (k Keeper) SetBankKeeper(bk authz.BankKeeper) Keeper {
+	k.bankKeeper = bk
+	return k
 }
 
 // Logger returns a module-specific logger.
@@ -80,16 +88,15 @@ func (k Keeper) update(ctx context.Context, grantee, granter sdk.AccAddress, upd
 		return sdkerrors.ErrPackAny.Wrapf("cannot proto marshal %T", updated)
 	}
 
-	any, err := codectypes.NewAnyWithValue(msg)
+	cdcAny, err := codectypes.NewAnyWithValue(msg)
 	if err != nil {
 		return err
 	}
 
-	grant.Authorization = any
+	grant.Authorization = cdcAny
 	store := k.storeService.OpenKVStore(ctx)
-	store.Set(skey, k.cdc.MustMarshal(&grant))
 
-	return nil
+	return store.Set(skey, k.cdc.MustMarshal(&grant))
 }
 
 // DispatchActions attempts to execute the provided messages via authorization

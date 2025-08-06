@@ -37,23 +37,21 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 			RpcCommandOptions: []*autocliv1.RpcCommandOptions{
 				{
 					RpcMethod: "AuthorizeCircuitBreaker",
-					Use:       "authorize [grantee] [permissions_json] --from [granter]",
+					Use:       "authorize [grantee] [level] [msg_type_urls] --from [granter]",
 					Short:     "Authorize an account to trip the circuit breaker.",
-					Long: `Authorize an account to trip the circuit breaker.
-"SOME_MSGS" =     1,
-"ALL_MSGS" =      2,
-"SUPER_ADMIN" =   3,`,
-					Example: fmt.Sprintf(`%s circuit authorize [address] '{"level":1,"limit_type_urls":["cosmos.bank.v1beta1.MsgSend,cosmos.bank.v1beta1.MsgMultiSend"]}'"`, version.AppName),
+					Long:      `Authorize an account to trip the circuit breaker. Level can be: some-msgs, all-msgs or super-admin.`,
+					Example:   fmt.Sprintf(`%s tx circuit authorize [address] super-admin "/cosmos.bank.v1beta1.MsgSend /cosmos.bank.v1beta1.MsgMultiSend"`, version.AppName),
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "grantee"},
-						{ProtoField: "permissions"}, // TODO(@julienrbrt) Support flattening msg for setting each field as a positional arg
+						{ProtoField: "permissions.level"},
+						{ProtoField: "permissions.limit_type_urls", Varargs: true},
 					},
 				},
 				{
 					RpcMethod: "TripCircuitBreaker",
 					Use:       "disable [msg_type_urls]",
 					Short:     "Disable a message from being executed",
-					Example:   fmt.Sprintf(`%s circuit disable "cosmos.bank.v1beta1.MsgSend cosmos.bank.v1beta1.MsgMultiSend"`, version.AppName),
+					Example:   fmt.Sprintf(`%s circuit disable "/cosmos.bank.v1beta1.MsgSend /cosmos.bank.v1beta1.MsgMultiSend"`, version.AppName),
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "msg_type_urls", Varargs: true},
 					},
@@ -62,7 +60,7 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 					RpcMethod: "ResetCircuitBreaker",
 					Use:       "reset [msg_type_urls]",
 					Short:     "Enable a message to be executed",
-					Example:   fmt.Sprintf(`%s circuit reset "cosmos.bank.v1beta1.MsgSend cosmos.bank.v1beta1.MsgMultiSend"`, version.AppName),
+					Example:   fmt.Sprintf(`%s circuit reset "/cosmos.bank.v1beta1.MsgSend /cosmos.bank.v1beta1.MsgMultiSend"`, version.AppName),
 					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
 						{ProtoField: "msg_type_urls", Varargs: true},
 					},

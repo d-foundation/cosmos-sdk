@@ -99,7 +99,7 @@ func bindFlags(basename string, cmd *cobra.Command, v *viper.Viper) (err error) 
 
 // InterceptConfigsPreRunHandler is identical to InterceptConfigsAndCreateContext
 // except it also sets the server context on the command and the server logger.
-func InterceptConfigsPreRunHandler(cmd *cobra.Command, customAppConfigTemplate string, customAppConfig interface{}, cmtConfig *cmtcfg.Config) error {
+func InterceptConfigsPreRunHandler(cmd *cobra.Command, customAppConfigTemplate string, customAppConfig any, cmtConfig *cmtcfg.Config) error {
 	serverCtx, err := InterceptConfigsAndCreateContext(cmd, customAppConfigTemplate, customAppConfig, cmtConfig)
 	if err != nil {
 		return err
@@ -126,7 +126,7 @@ func InterceptConfigsPreRunHandler(cmd *cobra.Command, customAppConfigTemplate s
 // is used to read and parse the application configuration. Command handlers can
 // fetch the server Context to get the CometBFT configuration or to get access
 // to Viper.
-func InterceptConfigsAndCreateContext(cmd *cobra.Command, customAppConfigTemplate string, customAppConfig interface{}, cmtConfig *cmtcfg.Config) (*Context, error) {
+func InterceptConfigsAndCreateContext(cmd *cobra.Command, customAppConfigTemplate string, customAppConfig any, cmtConfig *cmtcfg.Config) (*Context, error) {
 	serverCtx := NewDefaultContext()
 
 	// Get the executable name and configure the viper instance so that environmental
@@ -231,7 +231,7 @@ func SetCmdServerContext(cmd *cobra.Command, serverCtx *Context) error {
 // configuration file. The CometBFT configuration file is parsed given a root
 // Viper object, whereas the application is parsed with the private package-aware
 // viperCfg object.
-func interceptConfigs(rootViper *viper.Viper, customAppTemplate string, customConfig interface{}, cmtConfig *cmtcfg.Config) (*cmtcfg.Config, error) {
+func interceptConfigs(rootViper *viper.Viper, customAppTemplate string, customConfig any, cmtConfig *cmtcfg.Config) (*cmtcfg.Config, error) {
 	rootDir := rootViper.GetString(flags.FlagHome)
 	configPath := filepath.Join(rootDir, "config")
 	cmtCfgFile := filepath.Join(configPath, "config.toml")
@@ -331,6 +331,36 @@ func AddCommands(rootCmd *cobra.Command, defaultNodeHome string, appCreator type
 
 	startCmd := StartCmd(appCreator, defaultNodeHome)
 	addStartFlags(startCmd)
+
+	rootCmd.AddCommand(
+		startCmd,
+		cometCmd,
+		ExportCmd(appExport, defaultNodeHome),
+		version.NewVersionCommand(),
+		NewRollbackCmd(appCreator, defaultNodeHome),
+		ModuleHashByHeightQuery(appCreator),
+	)
+}
+
+// AddCommandsWithStartCmdOptions adds server commands with the provided StartCmdOptions.
+func AddCommandsWithStartCmdOptions(rootCmd *cobra.Command, defaultNodeHome string, appCreator types.AppCreator, appExport types.AppExporter, opts StartCmdOptions) {
+	cometCmd := &cobra.Command{
+		Use:     "comet",
+		Aliases: []string{"cometbft", "tendermint"},
+		Short:   "CometBFT subcommands",
+	}
+
+	cometCmd.AddCommand(
+		ShowNodeIDCmd(),
+		ShowValidatorCmd(),
+		ShowAddressCmd(),
+		VersionCmd(),
+		cmtcmd.ResetAllCmd,
+		cmtcmd.ResetStateCmd,
+		BootstrapStateCmd(appCreator),
+	)
+
+	startCmd := StartCmdWithOptions(appCreator, defaultNodeHome, opts)
 
 	rootCmd.AddCommand(
 		startCmd,
@@ -483,7 +513,12 @@ func DefaultBaseappOptions(appOpts types.AppOptions) []func(*baseapp.BaseApp) {
 	chainID := cast.ToString(appOpts.Get(flags.FlagChainID))
 	if chainID == "" {
 		// fallback to genesis chain-id
-		reader, err := os.Open(filepath.Join(homeDir, "config", "genesis.json"))
+		genesisPathCfg, _ := appOpts.Get("genesis_file").(string)
+		if genesisPathCfg == "" {
+			genesisPathCfg = filepath.Join("config", "genesis.json")
+		}
+
+		reader, err := os.Open(filepath.Join(homeDir, genesisPathCfg))
 		if err != nil {
 			panic(err)
 		}
@@ -526,6 +561,7 @@ func DefaultBaseappOptions(appOpts types.AppOptions) []func(*baseapp.BaseApp) {
 		baseapp.SetSnapshot(snapshotStore, snapshotOptions),
 		baseapp.SetIAVLCacheSize(cast.ToInt(appOpts.Get(FlagIAVLCacheSize))),
 		baseapp.SetIAVLDisableFastNode(cast.ToBool(appOpts.Get(FlagDisableIAVLFastNode))),
+		baseapp.SetIAVLSyncPruning(cast.ToBool(appOpts.Get(FlagIAVLSyncPruning))),
 		defaultMempool,
 		baseapp.SetChainID(chainID),
 		baseapp.SetQueryGasLimit(cast.ToUint64(appOpts.Get(FlagQueryGasLimit))),

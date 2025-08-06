@@ -209,7 +209,9 @@ func (p PercentageDecisionPolicy) Allow(tally TallyResult, totalPower string) (D
 	if err != nil {
 		return DecisionPolicyResult{}, errorsmod.Wrap(err, "total power")
 	}
-
+	if totalPowerDec.IsZero() {
+		return DecisionPolicyResult{Allow: false, Final: true}, nil
+	}
 	yesPercentage, err := yesCount.Quo(totalPowerDec)
 	if err != nil {
 		return DecisionPolicyResult{}, err
@@ -290,8 +292,8 @@ func (g GroupPolicyInfo) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error
 	return unpacker.UnpackAny(g.DecisionPolicy, &decisionPolicy)
 }
 
-func (g GroupInfo) PrimaryKeyFields() []interface{} {
-	return []interface{}{g.Id}
+func (g GroupInfo) PrimaryKeyFields() []any {
+	return []any{g.Id}
 }
 
 // ValidateBasic does basic validation on group info.
@@ -314,14 +316,14 @@ func (g GroupInfo) ValidateBasic() error {
 	return nil
 }
 
-func (g GroupPolicyInfo) PrimaryKeyFields() []interface{} {
+func (g GroupPolicyInfo) PrimaryKeyFields() []any {
 	addr := sdk.MustAccAddressFromBech32(g.Address)
 
-	return []interface{}{addr.Bytes()}
+	return []any{addr.Bytes()}
 }
 
-func (g Proposal) PrimaryKeyFields() []interface{} {
-	return []interface{}{g.Id}
+func (g Proposal) PrimaryKeyFields() []any {
+	return []any{g.Id}
 }
 
 // ValidateBasic does basic validation on group policy info.
@@ -352,10 +354,10 @@ func (g GroupPolicyInfo) ValidateBasic() error {
 	return nil
 }
 
-func (g GroupMember) PrimaryKeyFields() []interface{} {
+func (g GroupMember) PrimaryKeyFields() []any {
 	addr := sdk.MustAccAddressFromBech32(g.Member.Address)
 
-	return []interface{}{g.GroupId, addr.Bytes()}
+	return []any{g.GroupId, addr.Bytes()}
 }
 
 // ValidateBasic does basic validation on group member.
@@ -421,10 +423,10 @@ func (g Proposal) ValidateBasic() error {
 	return nil
 }
 
-func (v Vote) PrimaryKeyFields() []interface{} {
+func (v Vote) PrimaryKeyFields() []any {
 	addr := sdk.MustAccAddressFromBech32(v.Voter)
 
-	return []interface{}{v.ProposalId, addr.Bytes()}
+	return []any{v.ProposalId, addr.Bytes()}
 }
 
 var _ orm.Validateable = Vote{}
