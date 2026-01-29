@@ -31,3 +31,9 @@ func (h MultiBankHooks) BlockBeforeSend(ctx context.Context, from, to sdk.AccAdd
 	}
 	return nil
 }
+
+// BankHooksWrapper is a wrapper for modules to inject BankHooks using depinject.
+type BankHooksWrapper struct{ BankHooks }
+
+// IsOnePerModuleType implements the depinject.OnePerModuleType interface.
+func (BankHooksWrapper) IsOnePerModuleType() {}

@@ -209,6 +209,7 @@ func init() {
 		&modulev1.Module{},
 		appmodule.Provide(ProvideModule),
 		appmodule.Invoke(InvokeSetSendRestrictions),
+		appmodule.Invoke(InvokeSetBankHooks),
 	)
 }
 
@@ -301,5 +302,29 @@ func InvokeSetSendRestrictions(
 		keeper.AppendSendRestriction(restriction)
 	}
 
+	return nil
+}
+
+func InvokeSetBankHooks(
+	keeper *keeper.BaseKeeper,
+	hooks map[string]types.BankHooksWrapper,
+) error {
+	if keeper == nil || hooks == nil || len(hooks) == 0 {
+		return nil
+	}
+
+	// Default ordering is lexical by module name.
+	// Explicit ordering can be added to the module config if required.
+	modNames := slices.Sorted(maps.Keys(hooks))
+	var multiHooks types.MultiBankHooks
+	for _, modName := range modNames {
+		hook, ok := hooks[modName]
+		if !ok {
+			return fmt.Errorf("can't find bank hooks for module %s", modName)
+		}
+		multiHooks = append(multiHooks, hook)
+	}
+
+	keeper.SetHooks(multiHooks)
 	return nil
 }
