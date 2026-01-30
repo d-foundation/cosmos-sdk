@@ -70,7 +70,7 @@ func TestHooks(t *testing.T) {
 
 	// setup our mock bank hooks receiver that prevents the send of 100 coins
 	bankHooksReceiver := MockBankHooksReceiver{}
-	baseBankKeeper, ok := app.BankKeeper.(keeper.BaseKeeper)
+	baseBankKeeper, ok := app.BankKeeper.(*keeper.BaseKeeper)
 	require.True(t, ok)
 	baseBankKeeper.SetHooks(
 		types.NewMultiBankHooks(&bankHooksReceiver),
