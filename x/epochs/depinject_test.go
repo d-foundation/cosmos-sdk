@@ -64,7 +64,7 @@ func TestInvokeSetHooks(t *testing.T) {
 	}
 
 	// Call InvokeSetHooks
-	err := epochs.InvokeSetHooks(&mockKeeper, hooks)
+	err := epochs.InvokeSetHooks(mockKeeper, hooks)
 	require.NoError(t, err)
 
 	// Verify that hooks were set correctly

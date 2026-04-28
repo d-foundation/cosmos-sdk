@@ -427,7 +427,7 @@ lint-fix:
 
 protoVer=0.18.1
 protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
-protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(protoImageName)
+protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace -v $(shell go env GOMODCACHE):/go/pkg/mod -e GOPROXY -e GOPRIVATE $(protoImageName)
 
 proto-all: proto-format proto-lint proto-gen
 

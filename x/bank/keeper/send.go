@@ -62,6 +62,7 @@ type BaseSendKeeper struct {
 	storeService store.KVStoreService
 	logger       log.Logger
 	objStoreKey  storetypes.StoreKey
+	hooks        types.BankHooks
 
 	// list of addresses that are restricted from receiving transactions
 	blockedAddrs map[string]bool
@@ -117,6 +118,17 @@ func (k BaseSendKeeper) GetAuthority() string {
 	return k.authority
 }
 
+// Set the bank hooks
+func (k *BaseSendKeeper) SetHooks(bh types.BankHooks) *BaseSendKeeper {
+	if k.hooks != nil {
+		panic("cannot set bank hooks twice")
+	}
+
+	k.hooks = bh
+
+	return k
+}
+
 // GetParams returns the total set of bank parameters.
 func (k BaseSendKeeper) GetParams(ctx context.Context) (params types.Params) {
 	p, _ := k.Params.Get(ctx)
@@ -152,6 +164,19 @@ func (k BaseSendKeeper) InputOutputCoins(ctx context.Context, input types.Input,
 	inAddress, err := k.ak.AddressCodec().StringToBytes(input.Address)
 	if err != nil {
 		return err
+	}
+
+	for _, out := range outputs {
+		outAddress, err := k.ak.AddressCodec().StringToBytes(out.Address)
+		if err != nil {
+			return err
+		}
+
+		if err := k.BlockBeforeSend(ctx, inAddress, outAddress, out.Coins); err != nil {
+			return err
+		}
+
+		k.TrackBeforeSend(ctx, inAddress, outAddress, out.Coins)
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
@@ -224,15 +249,29 @@ func (k BaseSendKeeper) InputOutputCoins(ctx context.Context, input types.Input,
 	return nil
 }
 
+func (k BaseSendKeeper) SendCoins(ctx context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error {
+	// BlockBeforeSend hook should always be called before the TrackBeforeSend hook.
+	err := k.BlockBeforeSend(ctx, fromAddr, toAddr, amt)
+	if err != nil {
+		return err
+	}
+	return k.sendCoins(ctx, fromAddr, toAddr, amt)
+}
+
+// SendCoinsWithoutBlockHook calls sendCoins without calling the `BlockBeforeSend` hook.
+func (k BaseSendKeeper) SendCoinsWithoutBlockHook(ctx context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error {
+	return k.sendCoins(ctx, fromAddr, toAddr, amt)
+}
+
 // SendCoins transfers amt coins from a sending account to a receiving account.
 // An error is returned upon failure.
-func (k BaseSendKeeper) SendCoins(ctx context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error {
+func (k BaseSendKeeper) sendCoins(ctx context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error {
 	if !amt.IsValid() {
 		return errorsmod.Wrap(sdkerrors.ErrInvalidCoins, amt.String())
 	}
+	k.TrackBeforeSend(ctx, fromAddr, toAddr, amt)
 
-	var err error
-	toAddr, err = k.sendRestriction.apply(ctx, fromAddr, toAddr, amt)
+	toAddr, err := k.sendRestriction.apply(ctx, fromAddr, toAddr, amt)
 	if err != nil {
 		return err
 	}

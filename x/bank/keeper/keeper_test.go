@@ -162,7 +162,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 	queryClient := banktypes.NewQueryClient(queryHelper)
 
 	suite.queryClient = queryClient
-	suite.msgServer = keeper.NewMsgServerImpl(suite.bankKeeper)
+	suite.msgServer = keeper.NewMsgServerImpl(&suite.bankKeeper)
 	suite.encCfg = encCfg
 }
 
@@ -2991,7 +2991,7 @@ func (suite *KeeperTestSuite) TestMigrator_Migrate3to4() {
 				return mockSubspace{ps: ps}
 			}(banktypes.NewParams(def))
 
-			migrator := keeper.NewMigrator(bankKeeper, legacySubspace)
+			migrator := keeper.NewMigrator(&bankKeeper, legacySubspace)
 			require.NoError(migrator.Migrate3to4(ctx))
 
 			actual := bankKeeper.GetParams(ctx)
@@ -3014,7 +3014,7 @@ func (suite *KeeperTestSuite) TestMigrator_Migrate3to4() {
 				return mockSubspace{ps: ps}
 			}(banktypes.NewParams(def))
 
-			migrator := keeper.NewMigrator(bankKeeper, legacySubspace)
+			migrator := keeper.NewMigrator(&bankKeeper, legacySubspace)
 			require.NoError(migrator.Migrate3to4(ctx))
 
 			newParams := bankKeeper.GetParams(ctx)

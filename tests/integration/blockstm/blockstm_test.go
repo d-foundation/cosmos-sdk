@@ -154,7 +154,7 @@ func newBlockSTMTestApp(t *testing.T, db dbm.DB, logger log.Logger, enableBlockS
 	)
 
 	authModule := auth.NewAppModule(cdc, accountKeeper, authsims.RandomGenesisAccounts, nil)
-	bankModule := bank.NewAppModule(cdc, bankKeeper, accountKeeper, nil)
+	bankModule := bank.NewAppModule(cdc, &bankKeeper, accountKeeper, nil)
 
 	bApp.SetInitChainer(func(ctx sdk.Context, _ *abci.RequestInitChain) (*abci.ResponseInitChain, error) {
 		authModule.InitGenesis(ctx, cdc, authModule.DefaultGenesis(cdc))
@@ -162,7 +162,7 @@ func newBlockSTMTestApp(t *testing.T, db dbm.DB, logger log.Logger, enableBlockS
 		return &abci.ResponseInitChain{}, nil
 	})
 
-	banktypes.RegisterMsgServer(bApp.MsgServiceRouter(), bankkeeper.NewMsgServerImpl(bankKeeper))
+	banktypes.RegisterMsgServer(bApp.MsgServiceRouter(), bankkeeper.NewMsgServerImpl(&bankKeeper))
 
 	if enableBlockSTM {
 		bApp.SetBlockSTMTxRunner(newTestSTMRunner(
