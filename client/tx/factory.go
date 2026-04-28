@@ -22,6 +22,8 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+	vcv "github.com/d-foundation/protocol/x/vcv"
+	vcvtypes "github.com/d-foundation/protocol/x/vcv/types"
 )
 
 // Factory defines a client transaction factory that facilitates generating and
@@ -86,6 +88,24 @@ func NewFactoryCLI(clientCtx client.Context, flagSet *pflag.FlagSet) (Factory, e
 		}
 	}
 
+	// Check there is verifiable presentation
+	// These are Base64 encoded bytes
+	var extOpts []*codectypes.Any
+	vp, _ := flagSet.GetBytesBase64(flags.FlagVerifiablePresentation)
+	if len(vp) != 0 {
+		// Set the verifiable presentation as extention option
+		value := vcvtypes.VerifiablePresentation{
+			Presentation: vp,
+		}
+		valueBytes, _ := value.Marshal()
+
+		extOpts = []*codectypes.Any{
+			{
+				TypeUrl: vcv.ExtensionOptionTypeUrl,
+				Value:   valueBytes,
+			},
+		}
+	}
 	gasAdj := clientCtx.Viper.GetFloat64(flags.FlagGasAdjustment)
 	memo := clientCtx.Viper.GetString(flags.FlagNote)
 	timeout := clientCtx.Viper.GetDuration(flags.TimeoutDuration)
@@ -119,7 +139,7 @@ func NewFactoryCLI(clientCtx client.Context, flagSet *pflag.FlagSet) (Factory, e
 		signMode:           signMode,
 		feeGranter:         clientCtx.FeeGranter,
 		feePayer:           clientCtx.FeePayer,
-	}
+		extOptions:         extOpts}
 
 	feesStr := clientCtx.Viper.GetString(flags.FlagFees)
 	f = f.WithFees(feesStr)
@@ -381,6 +401,8 @@ func (f Factory) BuildUnsignedTx(msgs ...sdk.Msg) (client.TxBuilder, error) {
 
 	if etx, ok := tx.(client.ExtendedTxBuilder); ok {
 		etx.SetExtensionOptions(f.extOptions...)
+		tx = etx.(client.TxBuilder)
+		return tx, nil
 	}
 
 	return tx, nil

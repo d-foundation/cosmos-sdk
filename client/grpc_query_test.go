@@ -49,7 +49,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up integration test suite")
 	var (
 		interfaceRegistry codectypes.InterfaceRegistry
-		bankKeeper        bankkeeper.BaseKeeper
+		bankKeeper        *bankkeeper.BaseKeeper
 		appBuilder        *runtime.AppBuilder
 		cdc               codec.Codec
 	)

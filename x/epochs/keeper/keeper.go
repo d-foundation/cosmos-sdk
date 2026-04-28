@@ -19,7 +19,7 @@ type Keeper struct {
 }
 
 // NewKeeper returns a new keeper by codec and storeKey inputs.
-func NewKeeper(storeService store.KVStoreService, cdc codec.BinaryCodec) Keeper {
+func NewKeeper(storeService store.KVStoreService, cdc codec.BinaryCodec) *Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
 	k := Keeper{
 		storeService: storeService,
@@ -32,7 +32,7 @@ func NewKeeper(storeService store.KVStoreService, cdc codec.BinaryCodec) Keeper 
 		panic(err)
 	}
 	k.Schema = schema
-	return k
+	return &k
 }
 
 // SetHooks sets the hooks on the x/epochs keeper.

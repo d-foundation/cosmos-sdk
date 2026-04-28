@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package cosmos.vesting.dchainv1;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/cosmos/cosmos-sdk/x/auth/vesting/types";
+
+// NilPubKey is the pubkey type of the AbstractAccount. Basically, it represents
+// a pubkey that doesn't exist.
+//
+// The actual pubkey of an AbstractAccount (if it has one) is to be stored
+// inside the contract, not at the SDK level. Signature verification is also
+// done inside the contract, typically in the BeforeTx hook.
+message NilPubKey {
+  option (gogoproto.goproto_stringer) = false;
+  bytes address_bytes                 = 1;
+}

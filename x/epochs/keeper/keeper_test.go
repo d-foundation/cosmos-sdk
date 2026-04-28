@@ -32,7 +32,7 @@ func (s *KeeperTestSuite) SetupTest() {
 	s.EpochsKeeper = epochsKeeper
 	queryRouter := baseapp.NewGRPCQueryRouter()
 	cfg := module.NewConfigurator(nil, nil, queryRouter)
-	types.RegisterQueryServer(cfg.QueryServer(), epochskeeper.NewQuerier(s.EpochsKeeper))
+	types.RegisterQueryServer(cfg.QueryServer(), epochskeeper.NewQuerier(&s.EpochsKeeper))
 	grpcQueryService := &baseapp.QueryServiceTestHelper{
 		GRPCQueryRouter: queryRouter,
 		Ctx:             s.Ctx,
@@ -60,9 +60,9 @@ func Setup(t *testing.T) (sdk.Context, epochskeeper.Keeper) {
 
 	err := epochsKeeper.InitGenesis(ctx, *types.DefaultGenesis())
 	require.NoError(t, err)
-	SetEpochStartTime(ctx, epochsKeeper)
+	SetEpochStartTime(ctx, *epochsKeeper)
 
-	return ctx, epochsKeeper
+	return ctx, *epochsKeeper
 }
 
 func TestKeeperTestSuite(t *testing.T) {
