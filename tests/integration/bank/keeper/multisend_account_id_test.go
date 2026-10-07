@@ -70,7 +70,7 @@ func TestMultiSendNewAccountsGetUniqueIDs(t *testing.T) {
 
 	// Initialize module genesis (creates module accounts like mint).
 	authModule := auth.NewAppModule(cdc, accountKeeper, nil, nil)
-	bankModule := bank.NewAppModule(cdc, bankKeeper, accountKeeper, nil)
+	bankModule := bank.NewAppModule(cdc, &bankKeeper, accountKeeper, nil)
 	authModule.InitGenesis(ctx, cdc, authModule.DefaultGenesis(cdc))
 	bankModule.InitGenesis(ctx, cdc, bankModule.DefaultGenesis(cdc))
 
@@ -104,7 +104,7 @@ func TestMultiSendNewAccountsGetUniqueIDs(t *testing.T) {
 	totalSend := sdk.NewCoins(sdk.NewInt64Coin("stake", int64(100*numRecipients)))
 	input := banktypes.NewInput(senderAddr, totalSend)
 
-	msgServer := bankkeeper.NewMsgServerImpl(bankKeeper)
+	msgServer := bankkeeper.NewMsgServerImpl(&bankKeeper)
 	_, err := msgServer.MultiSend(ctx, banktypes.NewMsgMultiSend(input, outputs))
 	require.NoError(t, err)
 
