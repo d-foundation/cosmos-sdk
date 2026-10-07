@@ -4,7 +4,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/legacy"
 	"github.com/cosmos/cosmos-sdk/codec/types"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -60,8 +59,6 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&MsgCreateVestingAccount{},
 		&MsgCreatePermanentLockedAccount{},
 	)
-
-	registry.RegisterImplementations((*cryptotypes.PubKey)(nil), &NilPubKey{})
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }
