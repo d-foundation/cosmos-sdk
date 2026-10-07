@@ -103,7 +103,7 @@ func initDeterministicFixture(t *testing.T) *deterministicFixture {
 	)
 
 	authModule := auth.NewAppModule(cdc, accountKeeper, authsims.RandomGenesisAccounts, nil)
-	bankModule := bank.NewAppModule(cdc, bankKeeper, accountKeeper, nil)
+	bankModule := bank.NewAppModule(cdc, &bankKeeper, accountKeeper, nil)
 
 	integrationApp := integration.NewIntegrationApp(newCtx, logger, keys, cdc, map[string]appmodule.AppModule{
 		authtypes.ModuleName: authModule,
@@ -113,7 +113,7 @@ func initDeterministicFixture(t *testing.T) *deterministicFixture {
 	sdkCtx := sdk.UnwrapSDKContext(integrationApp.Context())
 
 	// Register MsgServer and QueryServer
-	banktypes.RegisterMsgServer(integrationApp.MsgServiceRouter(), keeper.NewMsgServerImpl(bankKeeper))
+	banktypes.RegisterMsgServer(integrationApp.MsgServiceRouter(), keeper.NewMsgServerImpl(&bankKeeper))
 	banktypes.RegisterQueryServer(integrationApp.QueryHelper(), keeper.NewQuerier(&bankKeeper))
 
 	qr := integrationApp.QueryHelper()
