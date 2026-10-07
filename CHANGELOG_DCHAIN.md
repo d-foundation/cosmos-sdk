@@ -63,14 +63,14 @@ Two customizations carried through earlier rebases were dropped when moving to `
 | File | What changed |
 |------|--------------|
 | `Makefile` | proto-builder docker invocation extended to mount the host's Go module cache (`$GOMODCACHE → /go/pkg/mod`) and forward `GOPROXY` / `GOPRIVATE` env vars — required because the `d-foundation/protocol` imports are pulled from a private repo during proto generation |
-| `go.mod` / `go.sum` (root + `simapp/`) | Adds `github.com/d-foundation/protocol v0.10.0` |
-| `tests/go.mod` / `tests/go.sum` | `go mod tidy` pulls in `github.com/99designs/keyring v1.2.2` (plus `github.com/DataDog/datadog-go` and `github.com/desertbit/timer` as transitive indirects) required by the `d-foundation/protocol` dep graph |
+| `go.mod` / `go.sum` (root + `simapp/`) | Adds `github.com/d-foundation/protocol v0.10.0` (direct); bumps `github.com/99designs/keyring` v1.2.1→v1.2.2 (direct); transitive version bumps: `github.com/DataDog/datadog-go` v3.2.0→v4.8.3, `github.com/desertbit/timer` v0.0.0-20180107155436→v1.0.1; adds `github.com/Microsoft/go-winio v0.6.2` (transitive, new to root go.mod) |
+| `tests/go.mod` / `tests/go.sum` | Adds `github.com/d-foundation/protocol v0.10.0` (transitive, pulled in by root); transitive version bumps: `github.com/DataDog/datadog-go` v3.2.0→v4.8.3, `github.com/desertbit/timer` v0.0.0-20180107155436→v1.0.1; adds `github.com/Microsoft/go-winio v0.6.2` (`keyring` v1.2.2 was already pinned in `tests/go.mod` before this branch) |
 
-> **Note for v0.54.2 rebase:** the original dchain branch (off v0.53.4) also pinned `cometbft` to `v0.38.21`. v0.54.2 ships `v0.39.1`, so on the rebased branch the cometbft pin is dropped and the upstream version is used.
+> **Note for v0.54.3 rebase:** the original dchain branch (off v0.53.4) also pinned `cometbft` to `v0.38.21`. v0.54.3 ships `v0.39.3`, so on the rebased branch the cometbft pin is dropped and the upstream version is used.
 
 ## File-Level Diff Summary
 
-Total against v0.54.3: **28 files** (including this changelog).
+Total against v0.54.3: **36 files**; +542 / −206 excluding this changelog (whose own line count changes with every doc edit).
 
 | File | Lines | Category |
 |------|-------|----------|
@@ -79,13 +79,27 @@ Total against v0.54.3: **28 files** (including this changelog).
 | `client/flags/flags.go` | 3 | VP feature |
 | `client/grpc_query_test.go` | 2 | Bank hooks (pointer, test adjustment) |
 | `client/tx/factory.go` | 24 | VP feature |
-| `go.mod` / `go.sum` | 20 | Dependencies |
+| `go.mod` | 8 | Dependencies |
+| `go.sum` | 12 | Dependencies |
 | `simapp/app.go` | 2 | Bank hooks (pointer) |
-| `simapp/go.mod` / `simapp/go.sum` | 18 | Dependencies |
-| `store/**/*.pb.go` (5 files) | 242 | Generated (regen noise from fork proto-gen; no functional change) |
-| `tests/integration/blockstm/blockstm_test.go` | 4 | Bank hooks (pointer, test adjustment) |
-| `tests/integration/distribution/keeper/msg_server_test.go` | 3 | Bank hooks (pointer, test adjustment) |
-| `tests/integration/staking/keeper/determinstic_test.go` | 2 | Bank hooks (pointer, test adjustment) |
+| `simapp/go.mod` | 6 | Dependencies |
+| `simapp/go.sum` | 12 | Dependencies |
+| `store/internal/kv/kv.pb.go` | 11 | Generated (regen noise from fork proto-gen; no functional change) |
+| `store/snapshots/types/snapshot.pb.go` | 69 | Generated (regen noise from fork proto-gen; no functional change) |
+| `store/streaming/abci/grpc.pb.go` | 62 | Generated (regen noise from fork proto-gen; no functional change) |
+| `store/types/commit_info.pb.go` | 45 | Generated (regen noise from fork proto-gen; no functional change) |
+| `store/types/listening.pb.go` | 55 | Generated (regen noise from fork proto-gen; no functional change) |
+| `tests/go.mod` | 6 | Dependencies |
+| `tests/go.sum` | 12 | Dependencies |
+| `tests/integration/bank/keeper/deterministic_test.go` | 4 | Test adjustment (pointer bank keeper) |
+| `tests/integration/bank/keeper/multisend_account_id_test.go` | 4 | Test adjustment (pointer bank keeper) |
+| `tests/integration/blockstm/blockstm_test.go` | 4 | Test adjustment (pointer bank keeper) |
+| `tests/integration/distribution/keeper/msg_server_test.go` | 2 | Test adjustment (pointer bank keeper) |
+| `tests/integration/evidence/keeper/infraction_test.go` | 2 | Test adjustment (pointer bank keeper) |
+| `tests/integration/gov/keeper/keeper_test.go` | 2 | Test adjustment (pointer bank keeper) |
+| `tests/integration/slashing/keeper/keeper_test.go` | 2 | Test adjustment (pointer bank keeper) |
+| `tests/integration/staking/keeper/common_test.go` | 2 | Test adjustment (pointer bank keeper) |
+| `tests/integration/staking/keeper/determinstic_test.go` | 2 | Test adjustment (pointer bank keeper) |
 | `x/bank/hooks_test.go` | 146 | Bank hooks |
 | `x/bank/keeper/hooks.go` | 26 | Bank hooks |
 | `x/bank/keeper/keeper.go` | 22 | Bank hooks |
