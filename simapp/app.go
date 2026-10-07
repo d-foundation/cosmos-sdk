@@ -447,7 +447,7 @@ func NewSimApp(
 		appCodec,
 	)
 
-	app.EpochsKeeper = epochsKeeper
+	app.EpochsKeeper = &epochsKeeper
 
 	app.EpochsKeeper.SetHooks(
 		epochstypes.NewMultiEpochHooks(
