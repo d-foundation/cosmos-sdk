@@ -17,12 +17,12 @@ This document describes the changes layered on top of upstream `cosmos-sdk` (cur
 
 ### 1. Verifiable Presentation (VP) on the Client
 
-Forces every CLI-built transaction to carry a base64-encoded Verifiable Presentation that is attached to the transaction as an extension option. Transactions without a VP are rejected at the factory level.
+Allows every CLI-built transaction to carry a base64-encoded Verifiable Presentation attached as a transaction extension option. When the `--verifiable-presentation` flag is provided, the factory wraps the bytes into a `*codectypes.Any` extension option and stores it in `Factory.extOptions`; when the flag is absent the factory builds the transaction without the extension option. Enforcement of the VP's presence happens on-chain via the vcv ante handler, not in the factory.
 
 | File | What changed |
 |------|--------------|
 | `client/flags/flags.go` | Adds `--verifiable-presentation` flag (`FlagVerifiablePresentation`), registered as `BytesBase64` in `AddTxFlagsToCmd` |
-| `client/tx/factory.go` | `NewFactoryCLI` reads the flag, errors when empty, wraps the bytes into `*codectypes.Any` with TypeUrl `vcv.ExtensionOptionTypeUrl`, and stores it in `Factory.extOptions` |
+| `client/tx/factory.go` | `NewFactoryCLI` reads the flag; when non-empty, wraps the bytes into `*codectypes.Any` with TypeUrl `vcv.ExtensionOptionTypeUrl` and stores it in `Factory.extOptions`; when empty, `extOptions` is nil and the tx is built without the extension option (on-chain vcv ante handler enforces presence) |
 
 New runtime dependency: `github.com/d-foundation/protocol v0.10.0` (provides the `vcv` package and `VerifiablePresentation` proto type).
 
@@ -64,6 +64,7 @@ Two customizations carried through earlier rebases were dropped when moving to `
 |------|--------------|
 | `Makefile` | proto-builder docker invocation extended to mount the host's Go module cache (`$GOMODCACHE → /go/pkg/mod`) and forward `GOPROXY` / `GOPRIVATE` env vars — required because the `d-foundation/protocol` imports are pulled from a private repo during proto generation |
 | `go.mod` / `go.sum` (root + `simapp/`) | Adds `github.com/d-foundation/protocol v0.10.0` |
+| `tests/go.mod` / `tests/go.sum` | `go mod tidy` pulls in `github.com/99designs/keyring v1.2.2` (plus `github.com/DataDog/datadog-go` and `github.com/desertbit/timer` as transitive indirects) required by the `d-foundation/protocol` dep graph |
 
 > **Note for v0.54.2 rebase:** the original dchain branch (off v0.53.4) also pinned `cometbft` to `v0.38.21`. v0.54.2 ships `v0.39.1`, so on the rebased branch the cometbft pin is dropped and the upstream version is used.
 
@@ -78,7 +79,7 @@ Total against v0.54.3: **28 files** (including this changelog).
 | `client/flags/flags.go` | 3 | VP feature |
 | `client/grpc_query_test.go` | 2 | Bank hooks (pointer, test adjustment) |
 | `client/tx/factory.go` | 24 | VP feature |
-| `go.mod` / `go.sum` | 18 | Dependencies |
+| `go.mod` / `go.sum` | 20 | Dependencies |
 | `simapp/app.go` | 2 | Bank hooks (pointer) |
 | `simapp/go.mod` / `simapp/go.sum` | 18 | Dependencies |
 | `store/**/*.pb.go` (5 files) | 242 | Generated (regen noise from fork proto-gen; no functional change) |
