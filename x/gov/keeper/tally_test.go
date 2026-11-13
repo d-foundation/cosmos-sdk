@@ -45,7 +45,7 @@ func TestVoteRemovalAfterTally(t *testing.T) {
 	// tally the proposal
 	proposal, err = govKeeper.Proposals.Get(ctx, proposalID)
 	require.NoError(t, err)
-	_, _, _, err = govKeeper.Tally(ctx, proposal)
+	_, _, _, _, err = govKeeper.Tally(ctx, proposal)
 	require.NoError(t, err)
 
 	// votes should be deleted.
@@ -98,7 +98,7 @@ func TestMultipleProposalsVoteRemoval(t *testing.T) {
 	// only tally proposal1
 	proposal1, err = govKeeper.Proposals.Get(ctx, proposal1ID)
 	require.NoError(t, err)
-	_, _, _, err = govKeeper.Tally(ctx, proposal1)
+	_, _, _, _, err = govKeeper.Tally(ctx, proposal1)
 	require.NoError(t, err)
 
 	// check votes

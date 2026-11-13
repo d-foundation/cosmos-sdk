@@ -138,7 +138,7 @@ func EndBlocker(ctx sdk.Context, keeper *keeper.Keeper) error {
 		default:
 			var tagValue, logMsg string
 
-			passes, burnDeposits, tallyResults, err := keeper.Tally(ctx, proposal)
+			passes, burnDeposits, tallyResults, _, err := keeper.Tally(ctx, proposal)
 			if err != nil {
 				return err
 			}
