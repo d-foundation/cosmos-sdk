@@ -141,12 +141,19 @@ func NewDefaultCalculateVoteResultsAndVotingPower(sk types.StakingKeeper) Calcul
 }
 
 // Tally iterates over the votes and updates the tally of a proposal based on the voting power of the
-// voters
-func (k Keeper) Tally(ctx context.Context, proposal v1.Proposal) (passes, burnDeposits bool, tallyResults v1.TallyResult, totalVotingPower math.LegacyDec, err error) {
+// voters.
+//
+// Besides the pass/burn verdict and the per-option TallyResult it returns the two totals the verdict
+// was derived from, so callers can report them without re-running the tally:
+//   - totalVotingPower: the voting power that actually voted (the quorum numerator)
+//   - totalValPower: the power of the whole bonded validator set (the quorum denominator)
+//
+// Both are populated on every return path, including early exits and errors.
+func (k Keeper) Tally(ctx context.Context, proposal v1.Proposal) (passes, burnDeposits bool, tallyResults v1.TallyResult, totalVotingPower math.LegacyDec, totalValPower math.Int, err error) {
 	tallyFn := k.calculateVoteResultsAndVotingPowerFn
 	totalVotingPower, totalValPower, results, err := tallyFn(ctx, k, proposal)
 	if err != nil {
-		return false, false, tallyResults, totalVotingPower, fmt.Errorf("error while calculating tally results: %w", err)
+		return false, false, tallyResults, totalVotingPower, totalValPower, fmt.Errorf("error while calculating tally results: %w", err)
 	}
 
 	tallyResults = v1.NewTallyResultFromMap(results)
@@ -154,30 +161,30 @@ func (k Keeper) Tally(ctx context.Context, proposal v1.Proposal) (passes, burnDe
 	// TODO: Upgrade the spec to cover all of these cases & remove pseudocode.
 	// If there is no validator power, the proposal fails
 	if totalValPower.IsZero() {
-		return false, false, tallyResults, totalVotingPower, nil
+		return false, false, tallyResults, totalVotingPower, totalValPower, nil
 	}
 
 	params, err := k.Params.Get(ctx)
 	if err != nil {
-		return false, false, tallyResults, totalVotingPower, fmt.Errorf("error while getting params: %w", err)
+		return false, false, tallyResults, totalVotingPower, totalValPower, fmt.Errorf("error while getting params: %w", err)
 	}
 
 	// If there is not enough quorum of votes, the proposal fails
 	percentVoting := totalVotingPower.Quo(math.LegacyNewDecFromInt(totalValPower))
 	quorum, _ := math.LegacyNewDecFromStr(params.Quorum)
 	if percentVoting.LT(quorum) {
-		return false, params.BurnVoteQuorum, tallyResults, totalVotingPower, nil
+		return false, params.BurnVoteQuorum, tallyResults, totalVotingPower, totalValPower, nil
 	}
 
 	// If no one votes (everyone abstains), proposal fails
 	if totalVotingPower.Sub(results[v1.OptionAbstain]).Equal(math.LegacyZeroDec()) {
-		return false, false, tallyResults, totalVotingPower, nil
+		return false, false, tallyResults, totalVotingPower, totalValPower, nil
 	}
 
 	// If more than 1/3 of voters veto, proposal fails
 	vetoThreshold, _ := math.LegacyNewDecFromStr(params.VetoThreshold)
 	if results[v1.OptionNoWithVeto].Quo(totalVotingPower).GT(vetoThreshold) {
-		return false, params.BurnVoteVeto, tallyResults, totalVotingPower, nil
+		return false, params.BurnVoteVeto, tallyResults, totalVotingPower, totalValPower, nil
 	}
 
 	// If more than 1/2 of non-abstaining voters vote Yes, proposal passes
@@ -192,9 +199,9 @@ func (k Keeper) Tally(ctx context.Context, proposal v1.Proposal) (passes, burnDe
 	threshold, _ := math.LegacyNewDecFromStr(thresholdStr)
 
 	if results[v1.OptionYes].Quo(totalVotingPower.Sub(results[v1.OptionAbstain])).GT(threshold) {
-		return true, false, tallyResults, totalVotingPower, nil
+		return true, false, tallyResults, totalVotingPower, totalValPower, nil
 	}
 
 	// If more than 1/2 of non-abstaining voters vote No, proposal fails
-	return false, false, tallyResults, totalVotingPower, nil
+	return false, false, tallyResults, totalVotingPower, totalValPower, nil
 }
