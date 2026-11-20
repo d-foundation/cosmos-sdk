@@ -9,6 +9,7 @@ This document describes the changes layered on top of upstream `cosmos-sdk` (cur
 - [Features](#features)
   - [1. Verifiable Presentation (VP) on the Client](#1-verifiable-presentation-vp-on-the-client)
   - [2. Bank Hooks (BlockBeforeSend / TrackBeforeSend)](#2-bank-hooks-blockbeforesend--trackbeforesend)
+  - [3. Gov Tally Returns Voting Power Totals](#3-gov-tally-returns-voting-power-totals)
 - [Removed in v0.54.3 Rebase](#removed-in-v0543-rebase)
 - [Build & Dependency Changes](#build--dependency-changes)
 - [File-Level Diff Summary](#file-level-diff-summary)
@@ -51,6 +52,18 @@ Lets other modules veto or observe coin movements **before** they happen — use
 
 > **Why pointer keeper?** `SetHooks` mutates the keeper. With an embedded value, the mutation would only affect a local copy. Switching to a pointer ensures every component (msgServer, migrator, depinject consumers) sees the same hook set.
 
+### 3. Gov Tally Returns Voting Power Totals
+
+`x/gov` `Keeper.Tally` returns two extra values alongside the pass/burn verdict and the `TallyResult`: the total voting power that actually voted (`totalVotingPower math.LegacyDec`, the quorum numerator) and the power of the whole bonded validator set (`totalValPower math.Int`, the quorum denominator). Both are already computed inside the tally, so exposing them lets callers report participation without re-running it. Used by dchain's `x/dgov` EndBlocker, which logs them and emits them in its `EventProposalTallied` typed event.
+
+| File | What changed |
+|------|--------------|
+| `x/gov/keeper/tally.go` | `Tally` signature gains `totalVotingPower math.LegacyDec` and `totalValPower math.Int` as its fourth and fifth return values; every return path, including early exits and errors, passes them through. Doc comment describes the new returns |
+| `x/gov/abci.go`, `x/gov/keeper/grpc_query.go` | Callers updated to the new arity (values discarded) |
+| `x/gov/keeper/tally_test.go`, `tests/integration/gov/keeper/tally_test.go` | Tests updated to the new arity |
+
+Breaking for any Go code calling `Tally` directly; ABCI and gRPC behaviour is unchanged. `x/gov` is otherwise identical to upstream.
+
 ## Removed in v0.54.3 Rebase
 
 Two customizations carried through earlier rebases were dropped when moving to `v0.54.3`:
@@ -70,7 +83,7 @@ Two customizations carried through earlier rebases were dropped when moving to `
 
 ## File-Level Diff Summary
 
-Total against v0.54.3: **36 files**; +542 / −206 excluding this changelog (whose own line count changes with every doc edit).
+Total against v0.54.3: **41 files**; +578 / −235 excluding this changelog (whose own line count changes with every doc edit).
 
 | File | Lines | Category |
 |------|-------|----------|
@@ -97,6 +110,7 @@ Total against v0.54.3: **36 files**; +542 / −206 excluding this changelog (who
 | `tests/integration/distribution/keeper/msg_server_test.go` | 2 | Test adjustment (pointer bank keeper) |
 | `tests/integration/evidence/keeper/infraction_test.go` | 2 | Test adjustment (pointer bank keeper) |
 | `tests/integration/gov/keeper/keeper_test.go` | 2 | Test adjustment (pointer bank keeper) |
+| `tests/integration/gov/keeper/tally_test.go` | 30 | Gov tally totals (test adjustment) |
 | `tests/integration/slashing/keeper/keeper_test.go` | 2 | Test adjustment (pointer bank keeper) |
 | `tests/integration/staking/keeper/common_test.go` | 2 | Test adjustment (pointer bank keeper) |
 | `tests/integration/staking/keeper/determinstic_test.go` | 2 | Test adjustment (pointer bank keeper) |
@@ -110,3 +124,7 @@ Total against v0.54.3: **36 files**; +542 / −206 excluding this changelog (who
 | `x/bank/module.go` | 39 | Bank hooks (depinject) |
 | `x/bank/types/expected_keepers.go` | 6 | Bank hooks |
 | `x/bank/types/hooks.go` | 39 | Bank hooks |
+| `x/gov/abci.go` | 2 | Gov tally totals (caller arity) |
+| `x/gov/keeper/grpc_query.go` | 2 | Gov tally totals (caller arity) |
+| `x/gov/keeper/tally.go` | 27 | Gov tally totals |
+| `x/gov/keeper/tally_test.go` | 4 | Gov tally totals (test adjustment) |
